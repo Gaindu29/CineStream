@@ -714,8 +714,9 @@ function inWL(id){ return getWL().some(m => m.id === id); }
 function updateWLBadge(){
   const n = getWL().length;
   const badge = document.getElementById('wlBadge');
-  badge.textContent = n;
-  badge.classList.toggle('show', n > 0);
+  if(badge){ badge.textContent = n; badge.classList.toggle('show', n > 0); }
+  const mb = document.getElementById('mbBadge');
+  if(mb){ mb.textContent = n; mb.classList.toggle('show', n > 0); }
 }
 
 // Call after modal opens to set button state
@@ -901,14 +902,7 @@ function setMobileTab(tab){
   if (el) el.classList.add('active');
 }
 
-// Keep mobile badge in sync with watchlist count
-const _origUpdateWLBadge = updateWLBadge;
-function updateWLBadge(){
-  _origUpdateWLBadge();
-  const n = getWL().length;
-  const mb = document.getElementById('mbBadge');
-  if (mb){ mb.textContent = n; mb.classList.toggle('show', n > 0); }
-}
+// mobile badge synced inside updateWLBadge below
 
 /* ═══════════════════════════════════════════════
    BOOT
