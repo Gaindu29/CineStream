@@ -377,28 +377,97 @@ function openFrameDirect(url, label){
 function closePlayer(){ document.getElementById('player').classList.remove('open'); document.getElementById('frame').src=''; document.body.style.overflow=''; }
 
 /* ═══════════════════════════════════════════════
-   SEARCH
+   SEARCH — suggestions on type, results on Enter / button
 ═══════════════════════════════════════════════ */
-let stmr;
-document.getElementById('q').addEventListener('input',function(){
-  clearTimeout(stmr);
-  const v=this.value.trim();
-  if(!v){ closeBrowse(); return; }
-  stmr=setTimeout(()=>doSearch(v),380);
+const qEl   = document.getElementById('q');
+const suggEl= document.getElementById('suggestions');
+let suggTmr, lastSuggQ = '';
+
+function closeSuggestions(){ suggEl.classList.remove('open'); suggEl.innerHTML=''; }
+
+// Show live suggestions while typing
+qEl.addEventListener('input', function(){
+  clearTimeout(suggTmr);
+  const v = this.value.trim();
+  if (!v){ closeSuggestions(); return; }
+  suggTmr = setTimeout(() => fetchSuggestions(v), 260);
 });
 
+// Search on Enter key
+qEl.addEventListener('keydown', function(e){
+  if (e.key === 'Enter'){
+    const v = this.value.trim();
+    if (v){ closeSuggestions(); doSearch(v); }
+  }
+  if (e.key === 'Escape'){ closeSuggestions(); this.blur(); }
+});
+
+// Search on arrow button click
+document.getElementById('srchBtn').addEventListener('click', function(){
+  const v = qEl.value.trim();
+  if (v){ closeSuggestions(); doSearch(v); }
+});
+
+// Close suggestions when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.srch-wrap')) closeSuggestions();
+});
+
+async function fetchSuggestions(q){
+  if (q === lastSuggQ) return;
+  lastSuggQ = q;
+  try {
+    const d = await api('/search/multi', { query: q, page: 1 });
+    if (q !== lastSuggQ) return; // stale
+    const items = (d.results||[])
+      .filter(r => r.media_type==='movie' || r.media_type==='tv')
+      .slice(0, 6);
+    if (!items.length){ closeSuggestions(); return; }
+    suggEl.innerHTML = '';
+    items.forEach(m => {
+      const title = m.title || m.name || '';
+      const year  = (m.release_date||m.first_air_date||'').split('-')[0];
+      const type  = m.media_type;
+      const poster = m.poster_path
+        ? `${IMG}/w92${m.poster_path}`
+        : `https://placehold.co/34x50/141924/8a96a8?text=?`;
+      const row = document.createElement('div');
+      row.className = 'sugg-item';
+      row.innerHTML = `
+        <img class="sugg-poster" src="${poster}" alt="${title}" loading="lazy">
+        <div class="sugg-info">
+          <div class="sugg-title">${title}</div>
+          <div class="sugg-meta">
+            <span class="sugg-type ${type}">${type==='tv'?'Series':'Movie'}</span>
+            ${year ? `<span>${year}</span>` : ''}
+            ${m.vote_average ? `<span>★ ${m.vote_average.toFixed(1)}</span>` : ''}
+          </div>
+        </div>`;
+      row.onclick = () => { closeSuggestions(); qEl.value=''; openModal(m.id, type); };
+      suggEl.appendChild(row);
+    });
+    // Footer: "See all results"
+    const footer = document.createElement('div');
+    footer.className = 'sugg-footer';
+    footer.textContent = `See all results for "${q}" →`;
+    footer.onclick = () => { closeSuggestions(); doSearch(q); };
+    suggEl.appendChild(footer);
+    suggEl.classList.add('open');
+  } catch { closeSuggestions(); }
+}
+
 async function doSearch(q){
+  qEl.value = q;
   showBrowse(`Results for "${q}"`);
-  const grid=document.getElementById('bgrid');
-  grid.innerHTML=Array(12).fill('<div class="bskel"></div>').join('');
+  const grid = document.getElementById('bgrid');
+  grid.innerHTML = Array(12).fill('<div class="bskel"></div>').join('');
   try{
-    const type=mode==='tv'?'tv':'movie';
-    const d=await api('/search/multi',{query:q});
-    grid.innerHTML='';
-    const res=(d.results||[]).filter(r=>r.media_type==='movie'||r.media_type==='tv');
-    if(!res.length){ grid.innerHTML='<p style="color:var(--muted);grid-column:1/-1">No results found.</p>'; return; }
-    res.forEach(m=>grid.appendChild(makeBCard(m, m.media_type)));
-  }catch{ grid.innerHTML='<p style="color:var(--muted)">Search failed. Check your connection.</p>'; }
+    const d = await api('/search/multi', { query: q });
+    grid.innerHTML = '';
+    const res = (d.results||[]).filter(r=>r.media_type==='movie'||r.media_type==='tv');
+    if (!res.length){ grid.innerHTML='<p style="color:var(--muted);grid-column:1/-1">No results found.</p>'; return; }
+    res.forEach(m => grid.appendChild(makeBCard(m, m.media_type)));
+  } catch { grid.innerHTML='<p style="color:var(--muted)">Search failed. Check your connection.</p>'; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -459,7 +528,8 @@ function makeBCard(m, type='movie'){
   return el;
 }
 
-function showBrowse(title){
+function showBrowse(title, pushHistory=true){
+  if(pushHistory) history.pushState({view:'browse', title}, '');
   document.getElementById('q').value='';
   document.getElementById('home').style.display='none';
   document.getElementById('browse').classList.add('open');
@@ -469,7 +539,27 @@ function closeBrowse(){
   document.getElementById('browse').classList.remove('open');
   document.getElementById('home').style.display='';
 }
-function goHome(){ closeBrowse(); document.getElementById('q').value=''; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); }
+function goHome(push=true){
+  if(push) history.pushState({view:'home'},'');
+  closeBrowse();
+  document.getElementById('q').value='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+}
+
+// ── BROWSER BACK / FORWARD ────────────────────────────────────────
+window.addEventListener('popstate', e => {
+  const state = e.state || {};
+  if (state.view === 'home' || !state.view){
+    closeBrowse();
+    document.getElementById('q').value='';
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  } else if (state.view === 'browse'){
+    // stay on browse — title is already in DOM; no re-fetch needed for back UX
+    document.getElementById('home').style.display='none';
+    document.getElementById('browse').classList.add('open');
+    document.getElementById('browseTitle').textContent = state.title||'';
+  }
+});
 
 /* ═══════════════════════════════════════════════
    TOAST
@@ -597,6 +687,8 @@ async function sendFb(){
    BOOT
 ═══════════════════════════════════════════════ */
 (()=>{
+  // Seed initial history state so popstate fires correctly on first back press
+  history.replaceState({view:'home'}, '');
   initChips();
   loadHero();
   initMovieRows();
