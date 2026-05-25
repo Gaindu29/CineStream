@@ -5,7 +5,6 @@
   --cw:190px;--ch:285px;--ease:.28s cubic-bezier(.4,0,.2,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{overflow-x:hidden;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
@@ -59,7 +58,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .type-tv{background:rgba(74,154,232,.15);color:var(--blue)}
 
 /* SECTIONS */
-.sec{padding:36px 44px 0;overflow:visible;}
+.sec{padding:36px 44px 0;overflow:visible;min-width:0;}
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .sec-title{font-family:'Bebas Neue',sans-serif;font-size:23px;letter-spacing:2px;display:flex;align-items:center;gap:9px}
 .sec-title::before{content:'';display:block;width:4px;height:20px;border-radius:2px;background:var(--gold)}
@@ -67,9 +66,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .seeall:hover{opacity:.65}
 
 /* CARD ROW */
-.row{display:flex;gap:12px;overflow-x:scroll;overflow-y:visible;padding-bottom:12px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;will-change:scroll-position;overscroll-behavior-x:contain;}
+.row{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:12px;
+  overflow-x:scroll;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;   /* iOS momentum scroll */
+  overscroll-behavior-x:contain;      /* don't trigger page scroll */
+  scroll-snap-type:x proximity;
+  scrollbar-width:none;               /* Firefox */
+  padding-bottom:14px;
+  /* no touch-action here — let browser decide; explicit pan-x blocks vertical scroll recovery */
+}
 .row::-webkit-scrollbar{display:none}
-.card{flex-shrink:0;width:var(--cw);height:var(--ch);border-radius:9px;overflow:hidden;position:relative;cursor:pointer;scroll-snap-align:start;transition:transform var(--ease),box-shadow var(--ease);background:var(--bg3)}
+.card{flex-shrink:0;min-width:var(--cw);width:var(--cw);height:var(--ch);border-radius:9px;overflow:hidden;position:relative;cursor:pointer;scroll-snap-align:start;transition:transform var(--ease),box-shadow var(--ease);background:var(--bg3)}
 .card:hover{transform:translateY(-7px) scale(1.03);box-shadow:0 18px 44px rgba(0,0,0,.7),0 0 0 1px rgba(232,185,74,.18);z-index:2}
 .card img{width:100%;height:100%;object-fit:cover}
 .card-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(8,11,16,.96) 0%,transparent 52%);opacity:0;transition:opacity var(--ease);display:flex;flex-direction:column;justify-content:flex-end;padding:12px}
@@ -159,23 +170,62 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
 .fnote{font-size:11px;color:var(--muted);opacity:.45;max-width:460px;line-height:1.6}
 
 @media(max-width:760px){
-  #nav{padding:0 18px;gap:10px}
-  .nav-links{display:none}
-  .hc{padding:0 20px}
-  .sec{padding:26px 18px 0;overflow:visible;}
-  .chips{padding:0 18px 14px}
-  :root{--cw:148px;--ch:222px}
-  footer{padding:28px 18px}
-  #browse{padding:80px 18px 44px}
-  /* ensure rows are never clipped on mobile */
-  .row,.cw-row{
-    margin:0 -18px;        /* bleed to screen edge */
-    padding-left:18px;
-    padding-right:18px;
-    scroll-padding-left:18px;
+  :root{--cw:145px;--ch:218px;}
+
+  /* ── NAV ── */
+  #nav{
+    padding:0 14px;gap:8px;height:56px;
   }
-  #cwSection{padding:26px 0 0;}
-  #cwSection .sec-hdr{padding:0 18px;}
+  .logo{font-size:22px;letter-spacing:2px;}
+  .nav-tabs{
+    padding:3px;gap:2px;
+    /* compact pill tabs */
+  }
+  .nav-tab{
+    padding:5px 12px;font-size:12px;
+  }
+  .nav-links{display:none;}       /* moved to tabs */
+  /* shrink search on mobile — icon only, expands on focus */
+  .srch{padding:6px 10px;}
+  #q{width:90px;font-size:12px;}
+  .nav-r{gap:8px;}
+  .ava{width:30px;height:30px;font-size:12px;}
+  .wl-badge{min-width:15px;height:15px;font-size:9px;}
+
+  /* ── CONTENT ── */
+  .hc{padding:0 16px;}
+  .sec{padding:22px 14px 0;overflow:visible;min-width:0;}
+  .chips{padding:0 14px 14px;}
+  #cwSection{padding:22px 0 0;}
+  #cwSection .sec-hdr{padding:0 14px;}
+
+  /* rows bleed to screen edges — key mobile scroll fix */
+  .row{
+    margin:0 -14px;
+    padding-left:14px;
+    padding-right:14px;
+    /* ensure the row stretches full width */
+    width:calc(100% + 28px);
+  }
+  .cw-row{
+    margin:0 -14px;
+    padding-left:14px;
+    padding-right:14px;
+    width:calc(100% + 28px);
+  }
+
+  /* ── BROWSE / WATCHLIST ── */
+  footer{padding:28px 14px;}
+  #browse{padding:72px 14px 40px;}
+  #watchlistPage{padding:72px 14px 40px;}
+  .wl-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;}
+  .bgrid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;}
+
+  /* ── MODALS ── */
+  .mbanner{height:220px;}
+  .mtitle{font-size:28px;}
+  .mactions{flex-wrap:wrap;}
+  .btn{padding:10px 18px;font-size:13px;}
 }
 
 /* ── THUMBS UP/DOWN ── */
@@ -359,7 +409,18 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
 #cwSection.show{display:block;}
 
 /* wider cards for CW so the label fits */
-.cw-row{display:flex;gap:14px;overflow-x:scroll;overflow-y:visible;padding-bottom:12px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;will-change:scroll-position;overscroll-behavior-x:contain;}
+.cw-row{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:14px;
+  overflow-x:scroll;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;
+  scrollbar-width:none;
+  padding-bottom:14px;
+}
 .cw-row::-webkit-scrollbar{display:none;}
 
 .cw-card{
