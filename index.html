@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineStream</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="logo" onclick="goHome()">CINE<em>STREAM</em></div>
+  <div class="nav-tabs">
+    <div class="nav-tab on" id="tabMovies" onclick="switchTab('movie')">🎬 Movies</div>
+    <div class="nav-tab"   id="tabTV"     onclick="switchTab('tv')">📺 TV Series</div>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="goHome()">Home</a></li>
+    <li><a id="navPopular"  onclick="browseList('popular')">Popular</a></li>
+    <li><a id="navTop"      onclick="browseList('top_rated')">Top Rated</a></li>
+    <li><a id="navUpcoming" onclick="browseList('upcoming')">Upcoming</a></li>
+  </ul>
+  <div class="nav-r">
+    <div class="srch">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="q" placeholder="Search…" autocomplete="off">
+    </div>
+    <div class="ava">G</div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="home">
+  <!-- HERO -->
+  <section id="hero">
+    <div id="heroBg"></div>
+    <div class="hc">
+      <div class="hbadge" id="hbadge">🔥 Trending</div>
+      <h1 id="htitle">Loading…</h1>
+      <div id="hmeta"></div>
+      <p id="hoverview"></p>
+      <div class="ha">
+        <button class="btn btn-g" id="hplay">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          Watch Now
+        </button>
+        <button class="btn btn-s" id="hinfo">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          More Info
+        </button>
+      </div>
+    </div>
+    <div class="hdots" id="hdots"></div>
+  </section>
+  <!-- CHIPS -->
+  <div class="chips" id="chips"></div>
+
+  <!-- MOVIE ROWS -->
+  <div id="movieRows">
+    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending This Week</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row" id="rTrend"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Movies</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row" id="rPop"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row" id="rTop"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Action &amp; Adventure</h2><span class="seeall" onclick="browseGenre(28,'Action')">See all →</span></div><div class="row" id="rAction"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Horror</h2><span class="seeall" onclick="browseGenre(27,'Horror')">See all →</span></div><div class="row" id="rHorror"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Sci-Fi</h2><span class="seeall" onclick="browseGenre(878,'Sci-Fi')">See all →</span></div><div class="row" id="rScifi"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Coming Soon</h2><span class="seeall" onclick="browseList('upcoming')">See all →</span></div><div class="row" id="rUpcoming"></div></div>
+  </div>
+
+  <!-- TV ROWS (hidden initially) -->
+  <div id="tvRows" style="display:none">
+    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending Series</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row" id="rTVTrend"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Series</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row" id="rTVPop"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated Series</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row" id="rTVTop"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Drama</h2><span class="seeall" onclick="browseGenre(18,'Drama')">See all →</span></div><div class="row" id="rTVDrama"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Crime &amp; Thriller</h2><span class="seeall" onclick="browseGenre(80,'Crime')">See all →</span></div><div class="row" id="rTVCrime"></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Animation</h2><span class="seeall" onclick="browseGenre(16,'Animation')">See all →</span></div><div class="row" id="rTVAnim"></div></div>
+  </div>
+</div>
+
+<!-- BROWSE/SEARCH PAGE -->
+<div id="browse">
+  <h2 class="sec-title" id="browseTitle" style="margin-bottom:0"></h2>
+  <div class="bgrid" id="bgrid"></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" onclick="bgClose(event)">
+  <div class="mbox">
+    <div class="mbanner"><img id="mimg" src="" alt=""><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="mbody">
+      <h2 class="mtitle" id="mtitle"></h2>
+      <div class="mmeta" id="mmeta"></div>
+      <p class="moverview" id="moverview"></p>
+      <div class="mactions">
+        <button class="btn btn-g" id="mplay"><svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch Now</button>
+        <button class="btn btn-s" id="mtrailer"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Trailer</button>
+      </div>
+      <!-- EP PICKER (TV only) -->
+      <div id="epPicker" style="display:none">
+        <div class="ep-lbl">Select Episode</div>
+        <div class="ep-row">
+          <select class="ep-select" id="seasonSel" onchange="loadEpisodes()"></select>
+          <span style="font-size:13px;color:var(--muted)" id="epCount"></span>
+        </div>
+        <div class="ep-lbl">Episodes</div>
+        <div class="ep-grid" id="epGrid"></div>
+      </div>
+      <!-- SOURCES -->
+      <div class="src-section" style="margin-top:18px">
+        <div class="src-lbl">Streaming Source</div>
+        <div class="srcs" id="msrcs"></div>
+      </div>
+
+      <!-- VOTE ROW -->
+      <div class="vote-row" id="voteRow">
+        <span class="vote-lbl">Rate this:</span>
+        <button class="vbtn up" id="voteUp" onclick="castVote('up')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          <span class="vcount" id="upCount">0</span>
+        </button>
+        <button class="vbtn down" id="voteDown" onclick="castVote('down')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+          <span class="vcount" id="downCount">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER -->
+<div id="player">
+  <div class="ptop">
+    <button class="pbk" onclick="closePlayer()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <span class="ptitle" id="ptitle"></span>
+    <div class="psrcs" id="psrcs"></div>
+  </div>
+  <div id="playerHint">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>If this source doesn't load, try switching to a different server above — <strong>tap any server button</strong> to switch instantly.</span>
+  </div>
+  <iframe id="frame" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+</div>
+
+<div id="toast"></div>
+
+<footer>
+  <div><div class="flogo">CINESTREAM</div><div class="fcopy">© 2025 CineStream</div></div>
+  <div class="fnote">Movie &amp; TV data by TMDB. Streams via third-party embeds — CineStream hosts no video content. This site is ad-free. If a source doesn't load, tap a different server in the player.</div>
+</footer>
+
+<script src="script.js"></script>
+
+
+<!-- FEEDBACK BUTTON -->
+<button id="fbBtn" onclick="openFb()">
+  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  Your Thoughts
+</button>
+
+<!-- FEEDBACK MODAL -->
+<div id="fbModal" onclick="fbBgClose(event)">
+  <div class="fbbox">
+    <div class="fbhead">
+      <div>
+        <div class="fbtitle">Your <span>Thoughts</span></div>
+        <div class="fbsub">Share feedback, report a bug, or just say hi — sent directly &amp; privately to the team.</div>
+      </div>
+      <button class="fbclose" onclick="closeFb()">✕</button>
+    </div>
+    <div class="fbbody">
+      <div id="fbForm">
+        <div class="fb-field" style="margin-bottom:14px">
+          <label>Your Name (optional)</label>
+          <input id="fbName" type="text" placeholder="e.g. Alex">
+        </div>
+        <div class="fb-field" style="margin-bottom:14px">
+          <label>Message</label>
+          <textarea id="fbMsg" placeholder="What's on your mind? Report a broken source, suggest a feature, or just share what you think of CineStream…"></textarea>
+        </div>
+        <button class="fbsend" onclick="sendFb()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Feedback
+        </button>
+      </div>
+      <div class="fb-sent" id="fbSent">
+        <svg width="44" height="44" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:block;margin:0 auto 12px"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+        <p>Thanks for the feedback!</p>
+        <small>Your message has been sent to the CineStream team.</small>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
