@@ -228,5 +228,28 @@
     </div>
   </div>
 </div>
+
+<!-- MOBILE BOTTOM TAB BAR -->
+<nav id="mobileNav">
+  <button id="mbHome" onclick="goHome();setMobileTab('home')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </button>
+  <button id="mbMovies" onclick="switchTab('movie');goHome();setMobileTab('movies')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="17" y1="7" x2="22" y2="7"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="2" y1="17" x2="7" y2="17"/></svg>
+    Movies
+  </button>
+  <button id="mbTV" onclick="switchTab('tv');goHome();setMobileTab('tv')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+    Series
+  </button>
+  <button id="mbWatchlist" onclick="openWatchlist();setMobileTab('watchlist')">
+    <span class="mb-icon">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <span class="mb-badge" id="mbBadge">0</span>
+    </span>
+    Watchlist
+  </button>
+</nav>
 </body>
 </html>

@@ -563,15 +563,15 @@ window.addEventListener('popstate', e => {
   const state = e.state || {};
   // Always close watchlist first
   document.getElementById('watchlistPage').classList.remove('open');
-  if (state.view === 'home' || !state.view){
+  if (state.view === 'home' || !state.view){ setMobileTab('home');
     closeBrowse();
     document.getElementById('q').value='';
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
-  } else if (state.view === 'browse'){
+  } else if (state.view === 'browse'){ setMobileTab(mode==='tv'?'tv':'movies');
     document.getElementById('home').style.display='none';
     document.getElementById('browse').classList.add('open');
     document.getElementById('browseTitle').textContent = state.title||'';
-  } else if (state.view === 'watchlist'){
+  } else if (state.view === 'watchlist'){ setMobileTab('watchlist');
     document.getElementById('home').style.display='none';
     document.getElementById('watchlistPage').classList.add('open');
     renderWatchlist();
@@ -887,6 +887,29 @@ function renderCWRow(){
   });
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE BOTTOM TAB BAR
+══════════════════════════════════════════════════════════════ */
+function setMobileTab(tab){
+  ['mbHome','mbMovies','mbTV','mbWatchlist'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const map = {home:'mbHome', movies:'mbMovies', tv:'mbTV', watchlist:'mbWatchlist'};
+  const el = document.getElementById(map[tab]);
+  if (el) el.classList.add('active');
+}
+
+// Keep mobile badge in sync with watchlist count
+const _origUpdateWLBadge = updateWLBadge;
+function updateWLBadge(){
+  _origUpdateWLBadge();
+  const n = getWL().length;
+  const mb = document.getElementById('mbBadge');
+  if (mb){ mb.textContent = n; mb.classList.toggle('show', n > 0); }
+}
+
 /* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
@@ -894,6 +917,7 @@ function renderCWRow(){
   // Seed initial history state so popstate fires correctly on first back press
   history.replaceState({view:'home'}, '');
   updateWLBadge();
+  setMobileTab('home');
   renderCWRow();
   initChips();
   loadHero();
