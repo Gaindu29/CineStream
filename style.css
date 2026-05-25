@@ -341,3 +341,59 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   #watchlistPage{padding:80px 18px 44px;}
   .wl-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
 }
+
+/* ══════════════════════════════════════════
+   CONTINUE WATCHING
+══════════════════════════════════════════ */
+#cwSection{display:none;padding:32px 44px 0;}
+#cwSection.show{display:block;}
+
+/* wider cards for CW so the label fits */
+.cw-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory;scrollbar-width:none;}
+.cw-row::-webkit-scrollbar{display:none;}
+
+.cw-card{
+  flex-shrink:0;width:220px;border-radius:10px;
+  overflow:hidden;position:relative;cursor:pointer;
+  scroll-snap-align:start;background:var(--bg3);
+  transition:transform var(--ease),box-shadow var(--ease);
+}
+.cw-card:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 18px 44px rgba(0,0,0,.7),0 0 0 1px rgba(232,185,74,.18);z-index:2;}
+.cw-thumb{width:100%;height:124px;object-fit:cover;display:block;}
+.cw-info{padding:10px 12px 12px;}
+.cw-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+.cw-sub{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.cw-sub .type-badge{font-size:9px;}
+
+/* progress bar */
+.cw-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin:8px 0 0;}
+.cw-fill{height:100%;border-radius:2px;background:var(--gold);}
+
+/* resume play icon overlay */
+.cw-play{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-110%);
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(232,185,74,.9);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:var(--ease);
+}
+.cw-card:hover .cw-play{opacity:1;transform:translate(-50%,-120%);}
+
+/* remove button */
+.cw-rm{
+  position:absolute;top:6px;right:6px;
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(0,0,0,.7);border:none;color:#fff;
+  cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:var(--ease);z-index:2;
+}
+.cw-card:hover .cw-rm{opacity:1;}
+.cw-rm:hover{background:var(--red);}
+
+@media(max-width:760px){
+  #cwSection{padding:26px 18px 0;}
+  .cw-card{width:180px;}
+  .cw-thumb{height:102px;}
+}

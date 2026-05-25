@@ -73,6 +73,16 @@
   <!-- CHIPS -->
   <div class="chips" id="chips"></div>
 
+
+  <!-- CONTINUE WATCHING — shown only when there's history -->
+  <div id="cwSection">
+    <div class="sec-hdr" style="margin-bottom:16px">
+      <h2 class="sec-title">Continue Watching</h2>
+      <span class="seeall" onclick="clearCW()">Clear history</span>
+    </div>
+    <div class="cw-row" id="cwRow"></div>
+  </div>
+
   <!-- MOVIE ROWS -->
   <div id="movieRows">
     <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending This Week</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row" id="rTrend"></div></div>

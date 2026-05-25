@@ -347,6 +347,18 @@ function openPlayer(id, type, label, srcIdx=0){
   document.body.style.overflow='hidden';
   showPlayerHint();
   buildPlayerSrcs(id, type, label, srcIdx);
+  // Record to Continue Watching
+  const poster   = document.getElementById('mimg')?.src || '';
+  // Try to grab backdrop from mimg (full-width banner image)
+  addToCW({
+    id, type,
+    title:   document.getElementById('mtitle')?.textContent || label || '',
+    poster,
+    backdrop: poster,   // mimg already shows the backdrop
+    season:   type==='tv' ? curSeason  : null,
+    episode:  type==='tv' ? curEpisode : null,
+    srcIdx
+  });
 }
 
 function buildPlayerSrcs(id, type, label, active){
@@ -795,6 +807,86 @@ function removeFromWL(id){
   toast('Removed from Watchlist');
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   CONTINUE WATCHING  — stored in localStorage as 'cs_cw'
+   Each entry: { id, type, title, poster, backdrop,
+                 season, episode, srcIdx, watched_at }
+   Max 20 entries. Most-recent first.
+══════════════════════════════════════════════════════════════ */
+const CW_MAX = 20;
+
+function getCW(){ try{ return JSON.parse(localStorage.getItem('cs_cw'))||[]; }catch{ return []; } }
+function saveCW(list){ try{ localStorage.setItem('cs_cw', JSON.stringify(list)); }catch{} }
+
+function addToCW(entry){
+  let list = getCW().filter(m => m.id !== entry.id); // remove existing entry for same title
+  list.unshift({ ...entry, watched_at: Date.now() });
+  if (list.length > CW_MAX) list = list.slice(0, CW_MAX);
+  saveCW(list);
+  renderCWRow();
+}
+
+function removeCW(id){
+  saveCW(getCW().filter(m => m.id !== id));
+  renderCWRow();
+}
+
+function clearCW(){
+  if (!getCW().length) return;
+  if (!confirm('Clear your watch history?')) return;
+  saveCW([]);
+  renderCWRow();
+}
+
+function renderCWRow(){
+  const list = getCW();
+  const section = document.getElementById('cwSection');
+  const row     = document.getElementById('cwRow');
+
+  if (!list.length){ section.classList.remove('show'); return; }
+  section.classList.add('show');
+  row.innerHTML = '';
+
+  list.forEach(m => {
+    const isTv     = m.type === 'tv';
+    const subLabel = isTv ? `S${String(m.season).padStart(2,'0')} E${String(m.episode).padStart(2,'0')}` : 'Movie';
+    const typeClass= isTv ? 'type-tv' : 'type-movie';
+    const typeWord = isTv ? 'SERIES' : 'MOVIE';
+
+    // Use backdrop if stored, else fall back to poster
+    const thumb = m.backdrop
+      ? m.backdrop
+      : (m.poster || `https://placehold.co/220x124/141924/8a96a8?text=${encodeURIComponent(m.title.slice(0,10))}`);
+
+    const card = document.createElement('div');
+    card.className = 'cw-card';
+    card.innerHTML = `
+      <img class="cw-thumb" src="${thumb}" alt="${m.title}"
+           onerror="this.src='https://placehold.co/220x124/141924/8a96a8?text=${encodeURIComponent(m.title.slice(0,10))}'">
+      <div class="cw-play">
+        <svg width="16" height="16" fill="var(--bg)" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <button class="cw-rm" title="Remove" onclick="event.stopPropagation(); removeCW(${m.id})">✕</button>
+      <div class="cw-info">
+        <div class="cw-title">${m.title}</div>
+        <div class="cw-sub">
+          <span class="type-badge ${typeClass}">${typeWord}</span>
+          <span>${subLabel}</span>
+        </div>
+        <div class="cw-bar"><div class="cw-fill" style="width:100%"></div></div>
+      </div>`;
+
+    // Clicking resumes straight into the player
+    card.onclick = () => {
+      curSeason  = m.season  || 1;
+      curEpisode = m.episode || 1;
+      openPlayer(m.id, m.type, m.title + (isTv ? ` — S${String(m.season).padStart(2,'0')}E${String(m.episode).padStart(2,'0')}` : ''), m.srcIdx||0);
+    };
+    row.appendChild(card);
+  });
+}
+
 /* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
@@ -802,6 +894,7 @@ function removeFromWL(id){
   // Seed initial history state so popstate fires correctly on first back press
   history.replaceState({view:'home'}, '');
   updateWLBadge();
+  renderCWRow();
   initChips();
   loadHero();
   initMovieRows();
