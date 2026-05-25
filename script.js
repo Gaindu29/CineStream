@@ -204,7 +204,7 @@ function initTVRows(){
    MODAL
 ═══════════════════════════════════════════════ */
 async function openModal(id, type='movie') {
-  curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; loadVotes(id);
+  curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; loadVotes(id); refreshWLBtn();
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow='hidden';
   // reset
@@ -549,15 +549,20 @@ function goHome(push=true){
 // ── BROWSER BACK / FORWARD ────────────────────────────────────────
 window.addEventListener('popstate', e => {
   const state = e.state || {};
+  // Always close watchlist first
+  document.getElementById('watchlistPage').classList.remove('open');
   if (state.view === 'home' || !state.view){
     closeBrowse();
     document.getElementById('q').value='';
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   } else if (state.view === 'browse'){
-    // stay on browse — title is already in DOM; no re-fetch needed for back UX
     document.getElementById('home').style.display='none';
     document.getElementById('browse').classList.add('open');
     document.getElementById('browseTitle').textContent = state.title||'';
+  } else if (state.view === 'watchlist'){
+    document.getElementById('home').style.display='none';
+    document.getElementById('watchlistPage').classList.add('open');
+    renderWatchlist();
   }
 });
 
@@ -683,12 +688,120 @@ async function sendFb(){
   }
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   WATCHLIST  — persisted in localStorage as 'cs_watchlist'
+   Stores: { id, type, title, poster_path, vote_average,
+             release_date, first_air_date, added_at }
+══════════════════════════════════════════════════════════════ */
+
+function getWL(){ try{ return JSON.parse(localStorage.getItem('cs_watchlist'))||[]; }catch{ return []; } }
+function saveWL(list){ try{ localStorage.setItem('cs_watchlist', JSON.stringify(list)); }catch{} }
+function inWL(id){ return getWL().some(m => m.id === id); }
+
+function updateWLBadge(){
+  const n = getWL().length;
+  const badge = document.getElementById('wlBadge');
+  badge.textContent = n;
+  badge.classList.toggle('show', n > 0);
+}
+
+// Call after modal opens to set button state
+function refreshWLBtn(){
+  if (!curId) return;
+  const btn  = document.getElementById('mwatchlist');
+  const text = document.getElementById('wlBtnText');
+  const inList = inWL(curId);
+  btn.classList.toggle('in-list', inList);
+  text.textContent = inList ? 'Remove from Watchlist' : 'Add to Watchlist';
+}
+
+function toggleWatchlist(){
+  if (!curId) return;
+  let list = getWL();
+  if (inWL(curId)){
+    list = list.filter(m => m.id !== curId);
+    toast('Removed from Watchlist');
+  } else {
+    // Grab data from the currently open modal
+    const title   = document.getElementById('mtitle').textContent;
+    const poster  = document.getElementById('mimg').src;
+    const metaEl  = document.getElementById('mmeta');
+    list.unshift({ id: curId, type: curType, title, poster, added_at: Date.now() });
+    toast('Added to Watchlist ✓');
+  }
+  saveWL(list);
+  refreshWLBtn();
+  updateWLBadge();
+}
+
+function clearWatchlist(){
+  if (!getWL().length) return;
+  if (!confirm('Clear your entire watchlist?')) return;
+  saveWL([]);
+  updateWLBadge();
+  renderWatchlist();
+}
+
+// ── WATCHLIST PAGE ────────────────────────────────────────────
+function openWatchlist(){
+  history.pushState({view:'watchlist'}, '');
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('browse').classList.remove('open');
+  document.getElementById('watchlistPage').classList.add('open');
+  renderWatchlist();
+}
+
+function closeWatchlist(){
+  document.getElementById('watchlistPage').classList.remove('open');
+  document.getElementById('home').style.display = '';
+}
+
+function renderWatchlist(){
+  const list = getWL();
+  const grid = document.getElementById('wlGrid');
+  grid.innerHTML = '';
+
+  if (!list.length){
+    grid.innerHTML = `
+      <div class="wl-empty" style="grid-column:1/-1">
+        <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <h3>Your Watchlist is Empty</h3>
+        <p>Open any movie or show and tap "Add to Watchlist" to save it here.</p>
+      </div>`;
+    return;
+  }
+
+  list.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'wl-card';
+    card.innerHTML = `
+      <img src="${m.poster}" alt="${m.title}" loading="lazy"
+           onerror="this.src='https://placehold.co/190x285/141924/8a96a8?text=${encodeURIComponent(m.title.slice(0,10))}'">
+      ${m.type==='tv' ? '<div class="ctv">SERIES</div>' : ''}
+      <button class="wl-remove" title="Remove" onclick="event.stopPropagation(); removeFromWL(${m.id})">✕</button>
+      <div class="card-ov">
+        <div class="card-ttl">${m.title}</div>
+      </div>`;
+    card.onclick = () => openModal(m.id, m.type);
+    grid.appendChild(card);
+  });
+}
+
+function removeFromWL(id){
+  saveWL(getWL().filter(m => m.id !== id));
+  updateWLBadge();
+  renderWatchlist();
+  toast('Removed from Watchlist');
+}
+
 /* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
 (()=>{
   // Seed initial history state so popstate fires correctly on first back press
   history.replaceState({view:'home'}, '');
+  updateWLBadge();
   initChips();
   loadHero();
   initMovieRows();

@@ -30,6 +30,7 @@
     <li><a id="navPopular"  onclick="browseList('popular')">Popular</a></li>
     <li><a id="navTop"      onclick="browseList('top_rated')">Top Rated</a></li>
     <li><a id="navUpcoming" onclick="browseList('upcoming')">Upcoming</a></li>
+    <li><a onclick="openWatchlist()">Watchlist<span class="wl-badge" id="wlBadge">0</span></a></li>
   </ul>
   <div class="nav-r">
     <div class="srch-wrap">
@@ -110,6 +111,7 @@
       <p class="moverview" id="moverview"></p>
       <div class="mactions">
         <button class="btn btn-g" id="mplay"><svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch Now</button>
+        <button class="btn btn-wl" id="mwatchlist" onclick="toggleWatchlist()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> <span id="wlBtnText">Add to Watchlist</span></button>
         <button class="btn btn-s" id="mtrailer"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Trailer</button>
       </div>
       <!-- EP PICKER (TV only) -->
@@ -167,6 +169,15 @@
 
 <script src="script.js"></script>
 
+
+<!-- WATCHLIST PAGE -->
+<div id="watchlistPage">
+  <div class="wl-header">
+    <h2 class="wl-title">My Watchlist</h2>
+    <button class="wl-clear" onclick="clearWatchlist()">Clear All</button>
+  </div>
+  <div class="wl-grid" id="wlGrid"></div>
+</div>
 
 <!-- FEEDBACK BUTTON -->
 <button id="fbBtn" onclick="openFb()">
