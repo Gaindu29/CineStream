@@ -204,63 +204,66 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   .wl-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
   footer{padding:28px 16px;margin-bottom:70px;}
 
-  /* ── MODAL ── */
-  .mbanner{height:210px;}
-  .mtitle{font-size:26px;}
-  /* MODAL — bottom sheet on mobile */
+  /* ════════════════════════════════════════════════════════════
+     MODAL — fixed bottom-sheet (reliable mobile scroll)
+     #modal is just the backdrop, .mbox is anchored to bottom
+     of viewport with explicit height for guaranteed scroll
+  ════════════════════════════════════════════════════════════ */
   #modal{
-    align-items:flex-end;    /* anchor to bottom */
-    justify-content:center;
-    padding:0;               /* no padding — sheet goes edge to edge */
+    display:block;             /* NOT flex — flex breaks nested scroll */
+    padding:0;
+    overflow:hidden;           /* backdrop doesn't scroll */
   }
   .mbox{
+    position:fixed;            /* anchored to viewport, not flex */
+    bottom:0;
+    left:0;
+    right:0;
     width:100%;
     max-width:100%;
-    max-height:88vh;         /* leaves 12% gap at top to show dismiss */
+    height:88vh;               /* explicit height = reliable scroll */
+    max-height:88vh;
     border-radius:20px 20px 0 0;
     border-bottom:none;
-    /* slide up animation */
-    transform:translateY(60px);
+    overflow-y:scroll;         /* scroll (not auto) — more reliable iOS */
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    transform:translateY(100%);
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
   }
   #modal.open .mbox{
     transform:translateY(0);
   }
-  /* drag handle pill at top of sheet */
+  /* drag handle pill at top */
   .mbox::before{
     content:'';
     display:block;
     width:40px;height:4px;
     border-radius:2px;
-    background:rgba(255,255,255,.2);
-    margin:10px auto 0;
-    flex-shrink:0;
+    background:rgba(255,255,255,.25);
+    margin:10px auto 4px;
+    position:sticky;
+    top:0;
+    z-index:5;
   }
-  .mbanner{height:240px;}
+  .mbanner{height:220px;}
   .mtitle{font-size:26px;}
-  .mbody{padding:0 16px 100px;}  /* extra bottom padding so last items clear the browser chrome */
+  .mbody{padding:0 16px 100px;}
   .mactions{flex-wrap:wrap;gap:8px;}
   .btn{padding:10px 18px;font-size:13px;}
   .srcs{gap:6px;}
   .sbtn{padding:6px 11px;font-size:11px;}
   .ep-grid{grid-template-columns:repeat(auto-fill,minmax(46px,1fr));}
-  /* close button on mobile sheet */
+  /* close button — sticky to top-right of the scrollable sheet */
   .mclose{
-    position:absolute;
-    top:12px;right:12px;
-    margin:0;float:none;
+    position:sticky;
+    top:8px;
+    float:right;
+    margin:8px 12px -44px auto;
+    z-index:10;
   }
-  .mbody{padding:0 18px 22px;}
-  .mactions,.modal-actions{flex-wrap:wrap;gap:8px;}
-  .btn{padding:9px 16px;font-size:13px;}
-  .srcs{gap:6px;}
-  .sbtn{padding:6px 11px;font-size:11px;}
-  .ep-grid{grid-template-columns:repeat(auto-fill,minmax(46px,1fr));}
-  /* close button on mobile sheet */
-  .mclose{
-    position:absolute;
-    top:12px;right:12px;
-    margin:0;float:none;
-  }
+  .mbody{padding:0 18px 100px;}
 
   /* ── PLAYER ── */
   .ptop{padding:10px 14px;}
