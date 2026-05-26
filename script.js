@@ -8,7 +8,7 @@ const IMG  = 'https://image.tmdb.org/t/p';
 // ─────────────────────────────────────────────────────────────
 //  STREAMING SOURCES  (ordered best → fallback)
 //  All sources use TMDB IDs — no extra keys needed.
-//  The CineStream site itself is 100% ad-free; you can add
+//  The Noctflix site itself is 100% ad-free; you can add
 //  your own ad units to this page at any time.
 // ─────────────────────────────────────────────────────────────
 const MOVIE_SRCS = [
@@ -596,8 +596,8 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePlayer(); cl
 /* ═══════════════════════════════════════════════
    THUMBS UP / DOWN  (stored in localStorage)
 ═══════════════════════════════════════════════ */
-function getVotes(id){ try{ return JSON.parse(localStorage.getItem('votes_'+id))||{up:0,down:0,mine:null}; }catch{ return {up:0,down:0,mine:null}; } }
-function saveVotes(id,v){ try{ localStorage.setItem('votes_'+id,JSON.stringify(v)); }catch{} }
+function getVotes(id){ try{ return JSON.parse(localStorage.getItem('nf_votes_'+id))||{up:0,down:0,mine:null}; }catch{ return {up:0,down:0,mine:null}; } }
+function saveVotes(id,v){ try{ localStorage.setItem('nf_votes_'+id,JSON.stringify(v)); }catch{} }
 
 function loadVotes(id){
   const v=getVotes(id);
@@ -678,10 +678,10 @@ async function sendFb(){
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         access_key: W3F_KEY,
-        subject: 'CineStream Feedback from ' + name,
+        subject: 'Noctflix Feedback from ' + name,
         name,
         message: msg,
-        from_name: 'CineStream'
+        from_name: 'Noctflix'
       })
     });
     const data = await res.json();
@@ -702,13 +702,13 @@ async function sendFb(){
 
 
 /* ══════════════════════════════════════════════════════════════
-   WATCHLIST  — persisted in localStorage as 'cs_watchlist'
+   WATCHLIST  — persisted in localStorage as 'nf_watchlist'
    Stores: { id, type, title, poster_path, vote_average,
              release_date, first_air_date, added_at }
 ══════════════════════════════════════════════════════════════ */
 
-function getWL(){ try{ return JSON.parse(localStorage.getItem('cs_watchlist'))||[]; }catch{ return []; } }
-function saveWL(list){ try{ localStorage.setItem('cs_watchlist', JSON.stringify(list)); }catch{} }
+function getWL(){ try{ return JSON.parse(localStorage.getItem('nf_watchlist'))||[]; }catch{ return []; } }
+function saveWL(list){ try{ localStorage.setItem('nf_watchlist', JSON.stringify(list)); }catch{} }
 function inWL(id){ return getWL().some(m => m.id === id); }
 
 function updateWLBadge(){
@@ -810,15 +810,15 @@ function removeFromWL(id){
 
 
 /* ══════════════════════════════════════════════════════════════
-   CONTINUE WATCHING  — stored in localStorage as 'cs_cw'
+   CONTINUE WATCHING  — stored in localStorage as 'nf_cw'
    Each entry: { id, type, title, poster, backdrop,
                  season, episode, srcIdx, watched_at }
    Max 20 entries. Most-recent first.
 ══════════════════════════════════════════════════════════════ */
 const CW_MAX = 20;
 
-function getCW(){ try{ return JSON.parse(localStorage.getItem('cs_cw'))||[]; }catch{ return []; } }
-function saveCW(list){ try{ localStorage.setItem('cs_cw', JSON.stringify(list)); }catch{} }
+function getCW(){ try{ return JSON.parse(localStorage.getItem('nf_cw'))||[]; }catch{ return []; } }
+function saveCW(list){ try{ localStorage.setItem('nf_cw', JSON.stringify(list)); }catch{} }
 
 function addToCW(entry){
   let list = getCW().filter(m => m.id !== entry.id); // remove existing entry for same title
