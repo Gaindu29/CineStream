@@ -150,6 +150,7 @@ async function loadRow(rowId, path, params={}, rank=false, type='movie') {
     const d = await api(path, params);
     el.innerHTML='';
     (d.results||[]).slice(0,20).forEach((m,i)=> el.appendChild(makeCard(m,i,rank,type)));
+    updateRowArrows(el);
   } catch { el.innerHTML='<p style="color:var(--muted);padding:14px">Could not load content.</p>'; }
 }
 
@@ -904,6 +905,39 @@ function setMobileTab(tab){
 
 // mobile badge synced inside updateWLBadge below
 
+
+/* ══════════════════════════════════════════════════════════════
+   ROW SCROLL ARROWS
+   scrollRow(rowId, dir) — dir: 1=right, -1=left
+   Scrolls by ~3 card widths. Updates arrow visibility.
+══════════════════════════════════════════════════════════════ */
+function scrollRow(rowId, dir){
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  const cardW = row.querySelector('.card, .cw-card')?.offsetWidth || 160;
+  const step  = cardW * 3 + 12 * 3;  // 3 cards + gaps
+  row.scrollBy({ left: dir * step, behavior: 'smooth' });
+  // update arrows after scroll settles
+  setTimeout(() => updateRowArrows(row), 420);
+}
+
+function updateRowArrows(row){
+  const wrap = row.closest('.row-wrap');
+  if (!wrap) return;
+  const atStart = row.scrollLeft <= 8;
+  const atEnd   = row.scrollLeft >= row.scrollWidth - row.clientWidth - 8;
+  wrap.querySelector('.arr-l')?.classList.toggle('hidden', atStart);
+  wrap.querySelector('.arr-r')?.classList.toggle('hidden', atEnd);
+}
+
+function initRowArrows(){
+  document.querySelectorAll('.row, .cw-row').forEach(row => {
+    // hide left arrow on init (at start)
+    updateRowArrows(row);
+    row.addEventListener('scroll', () => updateRowArrows(row), { passive: true });
+  });
+}
+
 /* ═══════════════════════════════════════════════
    BOOT
 ═══════════════════════════════════════════════ */
@@ -915,4 +949,5 @@ function setMobileTab(tab){
   initChips();
   loadHero();
   initMovieRows();
+  setTimeout(initRowArrows, 2000); // init arrows after rows load
 })();

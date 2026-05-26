@@ -80,28 +80,28 @@
       <h2 class="sec-title">Continue Watching</h2>
       <span class="seeall" onclick="clearCW()">Clear history</span>
     </div>
-    <div class="cw-row" id="cwRow"></div>
+    <div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('cwRow',-1)" aria-label="Scroll left">&#8249;</button><div class="cw-row" id="cwRow"></div><button class="row-arr arr-r" onclick="scrollRow('cwRow',1)" aria-label="Scroll right">&#8250;</button></div>
   </div>
 
   <!-- MOVIE ROWS -->
   <div id="movieRows">
-    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending This Week</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row" id="rTrend"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Movies</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row" id="rPop"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row" id="rTop"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Action &amp; Adventure</h2><span class="seeall" onclick="browseGenre(28,'Action')">See all →</span></div><div class="row" id="rAction"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Horror</h2><span class="seeall" onclick="browseGenre(27,'Horror')">See all →</span></div><div class="row" id="rHorror"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Sci-Fi</h2><span class="seeall" onclick="browseGenre(878,'Sci-Fi')">See all →</span></div><div class="row" id="rScifi"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Coming Soon</h2><span class="seeall" onclick="browseList('upcoming')">See all →</span></div><div class="row" id="rUpcoming"></div></div>
+    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending This Week</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTrend',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTrend"></div><button class="row-arr arr-r" onclick="scrollRow('rTrend',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Movies</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rPop',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rPop"></div><button class="row-arr arr-r" onclick="scrollRow('rPop',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTop',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTop"></div><button class="row-arr arr-r" onclick="scrollRow('rTop',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Action &amp; Adventure</h2><span class="seeall" onclick="browseGenre(28,'Action')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rAction',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rAction"></div><button class="row-arr arr-r" onclick="scrollRow('rAction',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Horror</h2><span class="seeall" onclick="browseGenre(27,'Horror')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rHorror',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rHorror"></div><button class="row-arr arr-r" onclick="scrollRow('rHorror',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Sci-Fi</h2><span class="seeall" onclick="browseGenre(878,'Sci-Fi')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rScifi',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rScifi"></div><button class="row-arr arr-r" onclick="scrollRow('rScifi',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Coming Soon</h2><span class="seeall" onclick="browseList('upcoming')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rUpcoming',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rUpcoming"></div><button class="row-arr arr-r" onclick="scrollRow('rUpcoming',1)" aria-label="Scroll right">&#8250;</button></div></div>
   </div>
 
   <!-- TV ROWS (hidden initially) -->
   <div id="tvRows" style="display:none">
-    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending Series</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row" id="rTVTrend"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Series</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row" id="rTVPop"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated Series</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row" id="rTVTop"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Drama</h2><span class="seeall" onclick="browseGenre(18,'Drama')">See all →</span></div><div class="row" id="rTVDrama"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Crime &amp; Thriller</h2><span class="seeall" onclick="browseGenre(80,'Crime')">See all →</span></div><div class="row" id="rTVCrime"></div></div>
-    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Animation</h2><span class="seeall" onclick="browseGenre(16,'Animation')">See all →</span></div><div class="row" id="rTVAnim"></div></div>
+    <div class="sec"><div class="sec-hdr"><h2 class="sec-title">Trending Series</h2><span class="seeall" onclick="browseList('trending')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVTrend',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVTrend"></div><button class="row-arr arr-r" onclick="scrollRow('rTVTrend',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Popular Series</h2><span class="seeall" onclick="browseList('popular')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVPop',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVPop"></div><button class="row-arr arr-r" onclick="scrollRow('rTVPop',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Top Rated Series</h2><span class="seeall" onclick="browseList('top_rated')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVTop',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVTop"></div><button class="row-arr arr-r" onclick="scrollRow('rTVTop',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Drama</h2><span class="seeall" onclick="browseGenre(18,'Drama')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVDrama',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVDrama"></div><button class="row-arr arr-r" onclick="scrollRow('rTVDrama',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Crime &amp; Thriller</h2><span class="seeall" onclick="browseGenre(80,'Crime')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVCrime',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVCrime"></div><button class="row-arr arr-r" onclick="scrollRow('rTVCrime',1)" aria-label="Scroll right">&#8250;</button></div></div>
+    <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Animation</h2><span class="seeall" onclick="browseGenre(16,'Animation')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVAnim',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVAnim"></div><button class="row-arr arr-r" onclick="scrollRow('rTVAnim',1)" aria-label="Scroll right">&#8250;</button></div></div>
   </div>
 </div>
 
@@ -114,7 +114,8 @@
 <!-- MODAL -->
 <div id="modal" onclick="bgClose(event)">
   <div class="mbox">
-    <div class="mbanner"><img id="mimg" src="" alt=""><button class="mclose" onclick="closeModal()">✕</button></div>
+    <button class="mclose" onclick="closeModal()">✕</button>
+    <div class="mbanner"><img id="mimg" src="" alt=""></div>
     <div class="mbody">
       <h2 class="mtitle" id="mtitle"></h2>
       <div class="mmeta" id="mmeta"></div>
