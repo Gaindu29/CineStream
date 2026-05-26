@@ -563,7 +563,7 @@ window.addEventListener('popstate', e => {
   const state = e.state || {};
   // Always close watchlist first
   document.getElementById('watchlistPage').classList.remove('open');
-  if (state.view === 'home' || !state.view){ setMobileTab('home');
+  if (state.view === 'home' || !state.view){ 
     closeBrowse();
     document.getElementById('q').value='';
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
@@ -893,11 +893,11 @@ function renderCWRow(){
    MOBILE BOTTOM TAB BAR
 ══════════════════════════════════════════════════════════════ */
 function setMobileTab(tab){
-  ['mbHome','mbMovies','mbTV','mbWatchlist'].forEach(id=>{
+  ['mbMovies','mbTV','mbWatchlist'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const map = {home:'mbHome', movies:'mbMovies', tv:'mbTV', watchlist:'mbWatchlist'};
+  const map = {movies:'mbMovies', tv:'mbTV', watchlist:'mbWatchlist'};
   const el = document.getElementById(map[tab]);
   if (el) el.classList.add('active');
 }
@@ -911,7 +911,6 @@ function setMobileTab(tab){
   // Seed initial history state so popstate fires correctly on first back press
   history.replaceState({view:'home'}, '');
   updateWLBadge();
-  setMobileTab('home');
   renderCWRow();
   initChips();
   loadHero();

@@ -236,7 +236,7 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   border-top:1px solid rgba(255,255,255,.08);
   height:62px;
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(3,1fr);
   align-items:center;
 }
 #mobileNav button{
