@@ -924,10 +924,19 @@ function scrollRow(rowId, dir){
 function updateRowArrows(row){
   const wrap = row.closest('.row-wrap');
   if (!wrap) return;
-  const atStart = row.scrollLeft <= 8;
-  const atEnd   = row.scrollLeft >= row.scrollWidth - row.clientWidth - 8;
-  wrap.querySelector('.arr-l')?.classList.toggle('hidden', atStart);
-  wrap.querySelector('.arr-r')?.classList.toggle('hidden', atEnd);
+  const canScroll = row.scrollWidth > row.clientWidth + 10;
+  const atStart   = row.scrollLeft <= 8;
+  const atEnd     = row.scrollLeft >= row.scrollWidth - row.clientWidth - 8;
+  const lBtn = wrap.querySelector('.arr-l');
+  const rBtn = wrap.querySelector('.arr-r');
+  // hide both if row doesn't overflow at all
+  if (!canScroll){
+    lBtn?.classList.add('hidden');
+    rBtn?.classList.add('hidden');
+    return;
+  }
+  lBtn?.classList.toggle('hidden', atStart);
+  rBtn?.classList.toggle('hidden', atEnd);
 }
 
 function initRowArrows(){
