@@ -205,7 +205,7 @@ function initTVRows(){
    MODAL
 ═══════════════════════════════════════════════ */
 async function openModal(id, type='movie') {
-  curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; loadVotes(id); refreshWLBtn();
+  curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; refreshWLBtn();
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow='hidden';
   // reset
@@ -594,35 +594,6 @@ function toast(msg){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePlayer(); closeModal(); } });
 
 
-/* ═══════════════════════════════════════════════
-   THUMBS UP / DOWN  (stored in localStorage)
-═══════════════════════════════════════════════ */
-function getVotes(id){ try{ return JSON.parse(localStorage.getItem('nf_votes_'+id))||{up:0,down:0,mine:null}; }catch{ return {up:0,down:0,mine:null}; } }
-function saveVotes(id,v){ try{ localStorage.setItem('nf_votes_'+id,JSON.stringify(v)); }catch{} }
-
-function loadVotes(id){
-  const v=getVotes(id);
-  document.getElementById('upCount').textContent=v.up;
-  document.getElementById('downCount').textContent=v.down;
-  document.getElementById('voteUp').classList.toggle('voted',v.mine==='up');
-  document.getElementById('voteDown').classList.toggle('voted',v.mine==='down');
-}
-
-function castVote(dir){
-  if(!curId) return;
-  const v=getVotes(curId);
-  if(v.mine===dir){
-    // undo vote
-    v[dir]=Math.max(0,v[dir]-1);
-    v.mine=null;
-  } else {
-    if(v.mine){ v[v.mine]=Math.max(0,v[v.mine]-1); }
-    v[dir]=(v[dir]||0)+1;
-    v.mine=dir;
-  }
-  saveVotes(curId,v);
-  loadVotes(curId);
-}
 
 /* ═══════════════════════════════════════════════
    PLAYER HINT — auto-hides after 6s
