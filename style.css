@@ -28,7 +28,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .srch svg{color:var(--muted);flex-shrink:0}
 #q{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:13px;width:160px}
 #q::placeholder{color:var(--muted)}
-.ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--bg)}
 
 /* HERO */
 #hero{position:relative;height:100vh;min-height:560px;overflow:hidden;display:flex;align-items:flex-end;padding-bottom:72px}
@@ -179,8 +178,7 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   .srch{padding:6px 12px;border-radius:20px;}
   #q{width:110px;font-size:13px;transition:width .3s;}
   #q:focus{width:150px;}
-  .ava{width:32px;height:32px;font-size:12px;}
-  .wl-badge{display:none!important;} /* shown in bottom bar instead */
+    .wl-badge{display:none!important;} /* shown in bottom bar instead */
 
   /* ── SECTIONS: zero side padding — rows handle their own indent ── */
   .sec{padding:20px 0 0;overflow:visible;min-width:0;}
