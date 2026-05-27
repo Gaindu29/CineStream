@@ -622,13 +622,9 @@ function closeFb(){
 function fbBgClose(e){ if(e.target===document.getElementById('fbModal')) closeFb(); }
 
 // ─────────────────────────────────────────────────────────────────
-//  FEEDBACK — FormSubmit.co AJAX
-//  No account, no key, no setup needed.
-//  First submission triggers a one-time activation email to you.
-//  Click the link in that email → all future submissions go straight
-//  to your inbox with no extra steps ever again.
+//  FEEDBACK — Web3Forms (no account, no email visible in code)
 // ─────────────────────────────────────────────────────────────────
-const _to = atob('Z2FpbmR1LnBlcmVyYTI5QGdtYWlsLmNvbQ=='); // base64 — not visible as plain text
+const W3F_KEY = 'aead9c6d-b081-403e-b272-63979d6f7a63';
 
 async function sendFb(){
   const name    = (document.getElementById('fbName').value || 'Anonymous').trim();
@@ -640,30 +636,29 @@ async function sendFb(){
   sendBtn.disabled    = true;
 
   try {
-    const res = await fetch('https://formsubmit.co/ajax/' + _to, {
+    const res = await fetch('https://api.web3forms.com/submit', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
+        access_key: W3F_KEY,
+        subject:    'Noctflix Feedback from ' + name,
         name,
-        message:   msg,
-        _subject:  'Noctflix Feedback from ' + name,
-        _captcha:  'false',
-        _template: 'table',
-        _replyto:  'noreply@noctflix.app'
+        message:    msg,
+        from_name:  'Noctflix'
       })
     });
     const data = await res.json();
-    if (data.success === 'true' || data.success === true){
+    if (data.success){
       document.getElementById('fbForm').style.display = 'none';
       document.getElementById('fbSent').style.display = 'block';
       setTimeout(closeFb, 3000);
     } else {
-      throw new Error('rejected');
+      throw new Error(data.message || 'rejected');
     }
   } catch(e){
     sendBtn.textContent = 'Send Feedback';
     sendBtn.disabled    = false;
-    toast('Could not send — make sure the site is online and try again.');
+    toast('Could not send — check your connection and try again.');
   }
 }
 

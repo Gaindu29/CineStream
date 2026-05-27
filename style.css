@@ -243,8 +243,8 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   #playerHint{font-size:12px;padding:20px 14px 14px;}
 
   /* ── FEEDBACK BTN ── */
-  #fbBtn{bottom:76px;left:16px;font-size:12px;padding:8px 14px;}
-  #toast{bottom:76px;right:16px;}
+  #fbBtn{bottom:80px!important;left:16px;font-size:12px;padding:8px 14px;}
+  #toast{bottom:80px!important;right:16px;}
 }
 
 /* ── MOBILE BOTTOM TAB BAR ── */
