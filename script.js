@@ -622,53 +622,48 @@ function closeFb(){
 function fbBgClose(e){ if(e.target===document.getElementById('fbModal')) closeFb(); }
 
 // ─────────────────────────────────────────────────────────────────
-//  FEEDBACK — Web3Forms (works from local files & any hosted domain)
-//  Setup (30 sec, one time):
-//    1. Go to https://web3forms.com
-//    2. Enter gaindu.perera29@gmail.com → click Create Access Key
-//    3. Copy the key and paste it below replacing YOUR_ACCESS_KEY
+//  FEEDBACK — FormSubmit.co AJAX
+//  No account, no key, no setup needed.
+//  First submission triggers a one-time activation email to you.
+//  Click the link in that email → all future submissions go straight
+//  to your inbox with no extra steps ever again.
 // ─────────────────────────────────────────────────────────────────
-const W3F_KEY = 'YOUR_ACCESS_KEY';  // ← paste your Web3Forms key here
+const _to = atob('Z2FpbmR1LnBlcmVyYTI5QGdtYWlsLmNvbQ=='); // base64 — not visible as plain text
 
 async function sendFb(){
-  const name = (document.getElementById('fbName').value || 'Anonymous').trim();
-  const msg  = document.getElementById('fbMsg').value.trim();
-  if (!msg) { document.getElementById('fbMsg').focus(); return; }
-
-  if (W3F_KEY === 'YOUR_ACCESS_KEY') {
-    toast('⚠ Add your Web3Forms key — see comment in source.');
-    return;
-  }
+  const name    = (document.getElementById('fbName').value || 'Anonymous').trim();
+  const msg     = document.getElementById('fbMsg').value.trim();
+  if (!msg){ document.getElementById('fbMsg').focus(); return; }
 
   const sendBtn = document.querySelector('.fbsend');
   sendBtn.textContent = 'Sending…';
-  sendBtn.disabled = true;
+  sendBtn.disabled    = true;
 
   try {
-    const res = await fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
+    const res = await fetch('https://formsubmit.co/ajax/' + _to, {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
-        access_key: W3F_KEY,
-        subject: 'Noctflix Feedback from ' + name,
         name,
-        message: msg,
-        from_name: 'Noctflix'
+        message:   msg,
+        _subject:  'Noctflix Feedback from ' + name,
+        _captcha:  'false',
+        _template: 'table',
+        _replyto:  'noreply@noctflix.app'
       })
     });
     const data = await res.json();
-    if (data.success) {
+    if (data.success === 'true' || data.success === true){
       document.getElementById('fbForm').style.display = 'none';
       document.getElementById('fbSent').style.display = 'block';
-      setTimeout(closeFb, 3500);
+      setTimeout(closeFb, 3000);
     } else {
-      throw new Error(data.message || 'rejected');
+      throw new Error('rejected');
     }
-  } catch(e) {
+  } catch(e){
     sendBtn.textContent = 'Send Feedback';
-    sendBtn.disabled = false;
-    toast('Could not send — check your connection and try again.');
-    console.error('Web3Forms error:', e);
+    sendBtn.disabled    = false;
+    toast('Could not send — make sure the site is online and try again.');
   }
 }
 
