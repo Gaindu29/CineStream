@@ -10,19 +10,35 @@ const IMG  = 'https://image.tmdb.org/t/p';
 //  All sources use TMDB IDs — no extra keys needed.
 //  The Noctflix site itself is 100% ad-free; you can add
 //  your own ad units to this page at any time.
+//
+//  NOTE: Streaming embed providers come and go frequently —
+//  if any source consistently fails for users, comment it out
+//  and try a fresh one. The fallback list is intentionally long
+//  so a dead source never blocks viewing.
 // ─────────────────────────────────────────────────────────────
 const MOVIE_SRCS = [
-  // Confirmed live — all use TMDB IDs, no keys needed
-  { id:'vsme',  name:'VidSrc',     fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
-  { id:'vsfyi', name:'VidSrc FYI', fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
-  { id:'vasy',  name:'Videasy',    fn: id => `https://player.videasy.net/movie/${id}` },
-  { id:'vsto',  name:'VidSrc .to', fn: id => `https://vidsrc.to/embed/movie/${id}` },
+  { id:'vidlink', name:'VidLink',    fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
+  { id:'vidfast', name:'VidFast',    fn: id => `https://vidfast.pro/movie/${id}` },
+  { id:'vasy',    name:'Videasy',    fn: id => `https://player.videasy.net/movie/${id}` },
+  { id:'autoemb', name:'AutoEmbed',  fn: id => `https://player.autoembed.cc/embed/movie/${id}` },
+  { id:'embsu',   name:'Embed.su',   fn: id => `https://embed.su/embed/movie/${id}` },
+  { id:'2emb',    name:'2Embed',     fn: id => `https://www.2embed.cc/embed/${id}` },
+  { id:'supemb',  name:'SuperEmbed', fn: id => `https://multiembed.mov/?video_id=${id}&tmdb=1` },
+  { id:'vsme',    name:'VidSrc',     fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
+  { id:'vsto',    name:'VidSrc .to', fn: id => `https://vidsrc.to/embed/movie/${id}` },
+  { id:'vsfyi',   name:'VidSrc FYI', fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
 ];
 const TV_SRCS = [
-  { id:'vsme',  name:'VidSrc',     fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { id:'vsfyi', name:'VidSrc FYI', fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
-  { id:'vasy',  name:'Videasy',    fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
-  { id:'vsto',  name:'VidSrc .to', fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
+  { id:'vidlink', name:'VidLink',    fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
+  { id:'vidfast', name:'VidFast',    fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
+  { id:'vasy',    name:'Videasy',    fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
+  { id:'autoemb', name:'AutoEmbed',  fn:(id,s,e)=>`https://player.autoembed.cc/embed/tv/${id}/${s}/${e}` },
+  { id:'embsu',   name:'Embed.su',   fn:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
+  { id:'2emb',    name:'2Embed',     fn:(id,s,e)=>`https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+  { id:'supemb',  name:'SuperEmbed', fn:(id,s,e)=>`https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { id:'vsme',    name:'VidSrc',     fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { id:'vsto',    name:'VidSrc .to', fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
+  { id:'vsfyi',   name:'VidSrc FYI', fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
 ];
 
 const MG = {28:'Action',18:'Drama',35:'Comedy',27:'Horror',878:'Sci-Fi',10749:'Romance',53:'Thriller',16:'Animation',12:'Adventure',14:'Fantasy',80:'Crime',99:'Documentary'};
@@ -37,6 +53,11 @@ let curId      = null, curType = 'movie';
 let curSrc     = 0;
 let curSeason  = 1, curEpisode = 1;
 let tvSeasons  = [];
+
+// Player episode browsing state (TV only)
+let curShowName   = '';     // clean show title (without S/E suffix) for the currently playing show
+let curEpsList    = [];     // episode array of the currently playing season (cached for next/prev)
+let pepPanelOpen  = false;
 
 /* ═══════════════════════════════════════════════
    TMDB FETCH
@@ -106,7 +127,7 @@ function setHero(i) {
   document.getElementById('heroBg').style.backgroundImage = `url(${IMG}/original${m.backdrop_path})`;
   document.getElementById('htitle').textContent     = title;
   document.getElementById('hoverview').textContent  = m.overview;
-  document.getElementById('hbadge').textContent     = mode==='tv' ? '📺 Trending Series' : '🔥 Trending';
+  document.getElementById('hbadge').textContent     = mode==='tv' ? 'Trending Series' : 'Trending';
   document.getElementById('hmeta').innerHTML =
     `<span class="hrating">★ ${m.vote_average?.toFixed(1)||'N/A'}</span>
      <span>${year}</span>
@@ -348,12 +369,27 @@ function openPlayer(id, type, label, srcIdx=0){
   document.body.style.overflow='hidden';
   showPlayerHint();
   buildPlayerSrcs(id, type, label, srcIdx);
+
+  // Show / hide TV episode controls in player top bar
+  const pepCtrls = document.getElementById('pepCtrls');
+  if (type === 'tv'){
+    pepCtrls.style.display = '';
+    // Keep a clean show name (label may include " — S01E02" suffix)
+    curShowName = (label || '').split(' — ')[0] || document.getElementById('mtitle')?.textContent || '';
+    // Prepare the episode panel data in the background
+    preparePlayerEpisodes(id);
+  } else {
+    pepCtrls.style.display = 'none';
+    // make sure panel is closed
+    if (pepPanelOpen) toggleEpPanel();
+  }
+
   // Record to Continue Watching
   const poster   = document.getElementById('mimg')?.src || '';
   // Try to grab backdrop from mimg (full-width banner image)
   addToCW({
     id, type,
-    title:   document.getElementById('mtitle')?.textContent || label || '',
+    title:   document.getElementById('mtitle')?.textContent || (type==='tv' ? curShowName : label) || '',
     poster,
     backdrop: poster,   // mimg already shows the backdrop
     season:   type==='tv' ? curSeason  : null,
@@ -371,6 +407,7 @@ function buildPlayerSrcs(id, type, label, active){
     b.className='psb'+(i===active?' on':'');
     b.textContent=s.name;
     b.onclick=()=>{
+      curSrc = i;
       document.getElementById('frame').src = type==='movie'
         ? srcs[i].fn(id)
         : srcs[i].fn(id, curSeason, curEpisode);
@@ -384,10 +421,192 @@ function openFrameDirect(url, label){
   document.getElementById('frame').src=url;
   document.getElementById('ptitle').textContent=label||'';
   document.getElementById('psrcs').innerHTML='';
+  document.getElementById('pepCtrls').style.display='none';
   document.getElementById('player').classList.add('open');
   document.body.style.overflow='hidden';
 }
-function closePlayer(){ document.getElementById('player').classList.remove('open'); document.getElementById('frame').src=''; document.body.style.overflow=''; }
+function closePlayer(){
+  document.getElementById('player').classList.remove('open');
+  document.getElementById('frame').src='';
+  document.body.style.overflow='';
+  // close episode panel if open
+  if (pepPanelOpen){
+    document.getElementById('pepPanel').classList.remove('open');
+    document.getElementById('pepBackdrop').classList.remove('on');
+    pepPanelOpen = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLAYER — EPISODE BROWSING  (TV only)
+   • preparePlayerEpisodes  — load season list + current season eps
+   • toggleEpPanel          — slide-in episode panel
+   • playerLoadSeason       — fetch a different season into the panel
+   • playerSwitchEp         — switch to selected season/episode
+   • playNextEp / playPrevEp — single-click traversal
+═══════════════════════════════════════════════════════════════ */
+async function preparePlayerEpisodes(showId){
+  // Always fetch fresh — tvSeasons may be stale (e.g. resumed from Continue Watching
+  // for a different show than the one whose modal was last opened)
+  try {
+    const det = await api(`/tv/${showId}`);
+    tvSeasons = (det.seasons || []).filter(s => s.season_number > 0);
+    if (!curShowName) curShowName = det.name || '';
+    // Populate season selector in panel
+    const sel = document.getElementById('pepSeasonSel');
+    sel.innerHTML = '';
+    tvSeasons.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.season_number;
+      o.textContent = `Season ${s.season_number}`;
+      sel.appendChild(o);
+    });
+    sel.value = curSeason;
+    // Load episode list for current season
+    await playerLoadSeason(false);
+    refreshPepButtons();
+  } catch(e){
+    // silent fail — buttons just won't work
+  }
+}
+
+async function playerLoadSeason(switchOnSelect=true){
+  const sel = document.getElementById('pepSeasonSel');
+  const seasonNum = parseInt(sel.value);
+  const grid = document.getElementById('pepListGrid');
+  grid.innerHTML = '<div class="pep-loading">Loading episodes…</div>';
+  try {
+    const d = await api(`/tv/${curId}/season/${seasonNum}`);
+    curEpsList = d.episodes || [];
+    grid.innerHTML = '';
+    if (!curEpsList.length){
+      grid.innerHTML = '<div class="pep-loading">No episodes found.</div>';
+      return;
+    }
+    curEpsList.forEach(ep => {
+      const isActive = (seasonNum === curSeason && ep.episode_number === curEpisode);
+      const stillImg = ep.still_path
+        ? `${IMG}/w300${ep.still_path}`
+        : `https://placehold.co/300x170/141924/8a96a8?text=Ep+${ep.episode_number}`;
+      const card = document.createElement('div');
+      card.className = 'pep-card' + (isActive ? ' on' : '');
+      card.innerHTML = `
+        <div class="pep-thumb-wrap">
+          <img class="pep-thumb" src="${stillImg}" alt="Episode ${ep.episode_number}" loading="lazy">
+          <div class="pep-num">EP ${ep.episode_number}</div>
+          ${isActive ? '<div class="pep-now">NOW PLAYING</div>' : '<div class="pep-play"><svg width="22" height="22" fill="#fff" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>'}
+        </div>
+        <div class="pep-card-title">${ep.name || 'Episode ' + ep.episode_number}</div>`;
+      card.onclick = () => playerSwitchEp(seasonNum, ep.episode_number);
+      grid.appendChild(card);
+    });
+  } catch(e){
+    grid.innerHTML = '<div class="pep-loading">Could not load episodes.</div>';
+  }
+}
+
+function playerSwitchEp(seasonNum, epNum){
+  curSeason  = seasonNum;
+  curEpisode = epNum;
+  // Reload frame with current source
+  const srcs = TV_SRCS;
+  const url  = srcs[curSrc].fn(curId, curSeason, curEpisode);
+  document.getElementById('frame').src = url;
+  // Update title bar
+  const label = `${curShowName} — S${String(curSeason).padStart(2,'0')}E${String(curEpisode).padStart(2,'0')}`;
+  document.getElementById('ptitle').textContent = label;
+  // Re-render panel so the active card highlights correctly
+  playerLoadSeason(false);
+  // Rebuild player source buttons so switching servers keeps the new s/e
+  buildPlayerSrcs(curId, 'tv', label, curSrc);
+  refreshPepButtons();
+  // Add to Continue Watching
+  addToCW({
+    id: curId, type: 'tv',
+    title: curShowName,
+    poster: document.getElementById('mimg')?.src || '',
+    backdrop: document.getElementById('mimg')?.src || '',
+    season: curSeason,
+    episode: curEpisode,
+    srcIdx: curSrc
+  });
+  // Close panel after selection (on mobile this is more natural)
+  if (pepPanelOpen && window.innerWidth < 900) toggleEpPanel();
+}
+
+function playNextEp(){
+  if (curType !== 'tv') return;
+  // Look up index in current season
+  const idx = curEpsList.findIndex(ep => ep.episode_number === curEpisode);
+  if (idx >= 0 && idx < curEpsList.length - 1){
+    playerSwitchEp(curSeason, curEpsList[idx + 1].episode_number);
+    return;
+  }
+  // End of season → try next season
+  const seasonIdx = tvSeasons.findIndex(s => s.season_number === curSeason);
+  if (seasonIdx >= 0 && seasonIdx < tvSeasons.length - 1){
+    const nextSeason = tvSeasons[seasonIdx + 1].season_number;
+    // Load next season's episodes then play E01
+    document.getElementById('pepSeasonSel').value = nextSeason;
+    api(`/tv/${curId}/season/${nextSeason}`).then(d => {
+      curEpsList = d.episodes || [];
+      if (curEpsList.length){
+        playerSwitchEp(nextSeason, curEpsList[0].episode_number);
+      } else {
+        toast('No more episodes.');
+      }
+    }).catch(() => toast('Could not load next season.'));
+    return;
+  }
+  toast('You\'ve reached the final episode.');
+}
+
+function playPrevEp(){
+  if (curType !== 'tv') return;
+  const idx = curEpsList.findIndex(ep => ep.episode_number === curEpisode);
+  if (idx > 0){
+    playerSwitchEp(curSeason, curEpsList[idx - 1].episode_number);
+    return;
+  }
+  // Start of season → try previous season's last episode
+  const seasonIdx = tvSeasons.findIndex(s => s.season_number === curSeason);
+  if (seasonIdx > 0){
+    const prevSeason = tvSeasons[seasonIdx - 1].season_number;
+    document.getElementById('pepSeasonSel').value = prevSeason;
+    api(`/tv/${curId}/season/${prevSeason}`).then(d => {
+      curEpsList = d.episodes || [];
+      if (curEpsList.length){
+        const lastEp = curEpsList[curEpsList.length - 1].episode_number;
+        playerSwitchEp(prevSeason, lastEp);
+      } else {
+        toast('No previous episodes.');
+      }
+    }).catch(() => toast('Could not load previous season.'));
+    return;
+  }
+  toast('This is the first episode.');
+}
+
+function refreshPepButtons(){
+  // Disable Prev if we're at S1E1, Next if at final season's final episode
+  const prevBtn = document.getElementById('pepPrev');
+  const nextBtn = document.getElementById('pepNext');
+  if (!prevBtn || !nextBtn) return;
+  const idx = curEpsList.findIndex(ep => ep.episode_number === curEpisode);
+  const seasonIdx = tvSeasons.findIndex(s => s.season_number === curSeason);
+  const atStart = (idx <= 0) && (seasonIdx <= 0);
+  const atEnd   = (idx === curEpsList.length - 1) && (seasonIdx === tvSeasons.length - 1);
+  prevBtn.classList.toggle('disabled', atStart);
+  nextBtn.classList.toggle('disabled', atEnd);
+}
+
+function toggleEpPanel(){
+  const panel    = document.getElementById('pepPanel');
+  const backdrop = document.getElementById('pepBackdrop');
+  pepPanelOpen = !pepPanelOpen;
+  panel.classList.toggle('open',    pepPanelOpen);
+  backdrop.classList.toggle('on',   pepPanelOpen);
+}
 
 /* ═══════════════════════════════════════════════
    SEARCH — suggestions on type, results on Enter / button
@@ -591,7 +810,13 @@ function toast(msg){
 /* ═══════════════════════════════════════════════
    KEYBOARD
 ═══════════════════════════════════════════════ */
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closePlayer(); closeModal(); } });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    // Close episode panel first if open, otherwise close player/modal
+    if (pepPanelOpen){ toggleEpPanel(); return; }
+    closePlayer(); closeModal();
+  }
+});
 
 
 
@@ -703,7 +928,7 @@ function toggleWatchlist(){
     const poster  = document.getElementById('mimg').src;
     const metaEl  = document.getElementById('mmeta');
     list.unshift({ id: curId, type: curType, title, poster, added_at: Date.now() });
-    toast('Added to Watchlist ✓');
+    toast('Added to Watchlist');
   }
   saveWL(list);
   refreshWLBtn();
@@ -754,7 +979,7 @@ function renderWatchlist(){
       <img src="${m.poster}" alt="${m.title}" loading="lazy"
            onerror="this.src='https://placehold.co/190x285/141924/8a96a8?text=${encodeURIComponent(m.title.slice(0,10))}'">
       ${m.type==='tv' ? '<div class="ctv">SERIES</div>' : ''}
-      <button class="wl-remove" title="Remove" onclick="event.stopPropagation(); removeFromWL(${m.id})">✕</button>
+      <button class="wl-remove" title="Remove" onclick="event.stopPropagation(); removeFromWL(${m.id})"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       <div class="card-ov">
         <div class="card-ttl">${m.title}</div>
       </div>`;
@@ -830,7 +1055,7 @@ function renderCWRow(){
       <div class="cw-play">
         <svg width="16" height="16" fill="var(--bg)" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       </div>
-      <button class="cw-rm" title="Remove" onclick="event.stopPropagation(); removeCW(${m.id})">✕</button>
+      <button class="cw-rm" title="Remove" onclick="event.stopPropagation(); removeCW(${m.id})"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       <div class="cw-info">
         <div class="cw-title">${m.title}</div>
         <div class="cw-sub">
