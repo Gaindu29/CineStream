@@ -100,12 +100,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* MODAL */
 #modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.84);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s;padding:16px}
 #modal.open{opacity:1;pointer-events:all}
-.mbox{position:relative;background:var(--bg2);border-radius:14px;overflow:hidden;width:100%;max-width:860px;max-height:92vh;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 100px rgba(0,0,0,.8);transform:scale(.94);transition:transform .28s;}
+.mbox{position:relative;background:var(--bg2);border-radius:14px;overflow:hidden;width:100%;max-width:860px;max-height:92vh;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 100px rgba(0,0,0,.8);transform:scale(.94);transition:transform .28s;display:flex;flex-direction:column;}
 #modal.open .mbox{transform:scale(1)}
-/* Scrolling lives on this INNER element, separate from the transformed/animated
-   .mbox above it. A transform + overflow:auto on the same element is a known
-   iOS Safari bug that silently blocks touch scrolling — splitting them fixes it. */
-.mbox-scroll{max-height:92vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+/* Scrolling lives on this INNER flex child, separate from the transformed
+   .mbox above it (transform + overflow-scroll on the same element is a known
+   iOS Safari bug). flex:1 + min-height:0 is required here — without
+   min-height:0 a flex child defaults to min-height:auto, which stops it from
+   ever shrinking to fit .mbox's max-height, silently breaking the scroll. */
+.mbox-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .mbanner{position:relative;height:320px;overflow:hidden;flex-shrink:0}
 .mbanner img{width:100%;height:100%;object-fit:cover}
 .mbanner::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,var(--bg2) 0%,transparent 60%)}
