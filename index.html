@@ -114,6 +114,7 @@
 <div id="modal" onclick="bgClose(event)">
   <div class="mbox">
     <button class="mclose" onclick="closeModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="mbox-scroll">
     <div class="mbanner"><img id="mimg" src="" alt=""></div>
     <div class="mbody">
       <h2 class="mtitle" id="mtitle"></h2>
@@ -126,18 +127,24 @@
       </div>
       <!-- EP PICKER (TV only) -->
       <div id="epPicker" style="display:none">
-        <div class="ep-lbl">Select Episode</div>
+        <div class="ep-lbl">Episode</div>
         <div class="ep-row">
           <select class="ep-select" id="seasonSel" onchange="loadEpisodes()"></select>
-          <span style="font-size:13px;color:var(--muted)" id="epCount"></span>
+          <select class="ep-select" id="episodeSel" onchange="pickEpisode()"></select>
         </div>
-        <div class="ep-lbl">Episodes</div>
-        <div class="ep-grid" id="epGrid"></div>
+        <p class="ep-current" id="epCurrentDesc"></p>
       </div>
       <!-- SOURCES -->
       <div class="src-section" style="margin-top:18px">
         <div class="src-lbl">Streaming Source</div>
-        <div class="srcs" id="msrcs"></div>
+        <div class="src-dd" id="msrcsDD">
+          <button class="src-dd-btn" id="msrcsBtn" type="button" onclick="toggleSrcDD('m')">
+            <span id="msrcsCurrent">Loading…</span>
+            <svg class="src-dd-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="src-dd-list" id="msrcsList"></div>
+        </div>
+      </div>
       </div>
       </div>
   </div>
@@ -163,11 +170,23 @@
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
-    <div class="psrcs" id="psrcs"></div>
+    <div class="psrcs" id="psrcsWrap">
+      <div class="src-dd src-dd-player" id="psrcsDD">
+        <button class="src-dd-btn src-dd-btn-player" id="psrcsBtn" type="button" onclick="toggleSrcDD('p')">
+          <span class="src-dd-tag">Server</span>
+          <span id="psrcsCurrent">—</span>
+          <svg class="src-dd-chev" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="src-dd-list src-dd-list-player" id="psrcsList"></div>
+      </div>
+      <button class="src-next-btn" id="psrcsNext" onclick="switchToNextSrc()" title="Try next server">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
   </div>
   <div id="playerHint">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span>If this source doesn't load, try switching to a different server above — <strong>tap any server button</strong> to switch instantly.</span>
+    <span>If this source doesn't load, tap <strong>Next Server</strong> or pick one from the dropdown above.</span>
   </div>
   <iframe id="frame" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>
 

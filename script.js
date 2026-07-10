@@ -16,27 +16,21 @@ const IMG  = 'https://image.tmdb.org/t/p';
 //  and try a fresh one. The fallback list is intentionally long
 //  so a dead source never blocks viewing.
 // ─────────────────────────────────────────────────────────────
+// Trimmed down to the servers that are actually holding up right now.
+// (Dropped: Embed.su, AutoEmbed, SuperEmbed, 2Embed, VidSrc.me — all
+// increasingly unreliable / rotating domains. Add sources back here if
+// you find a new one worth testing.)
 const MOVIE_SRCS = [
-  { id:'vidlink', name:'VidLink',    fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
   { id:'vidfast', name:'VidFast',    fn: id => `https://vidfast.pro/movie/${id}` },
+  { id:'vidlink', name:'VidLink',    fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
   { id:'vasy',    name:'Videasy',    fn: id => `https://player.videasy.net/movie/${id}` },
-  { id:'autoemb', name:'AutoEmbed',  fn: id => `https://player.autoembed.cc/embed/movie/${id}` },
-  { id:'embsu',   name:'Embed.su',   fn: id => `https://embed.su/embed/movie/${id}` },
-  { id:'2emb',    name:'2Embed',     fn: id => `https://www.2embed.cc/embed/${id}` },
-  { id:'supemb',  name:'SuperEmbed', fn: id => `https://multiembed.mov/?video_id=${id}&tmdb=1` },
-  { id:'vsme',    name:'VidSrc',     fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
   { id:'vsto',    name:'VidSrc .to', fn: id => `https://vidsrc.to/embed/movie/${id}` },
   { id:'vsfyi',   name:'VidSrc FYI', fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
 ];
 const TV_SRCS = [
-  { id:'vidlink', name:'VidLink',    fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
   { id:'vidfast', name:'VidFast',    fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
+  { id:'vidlink', name:'VidLink',    fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
   { id:'vasy',    name:'Videasy',    fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
-  { id:'autoemb', name:'AutoEmbed',  fn:(id,s,e)=>`https://player.autoembed.cc/embed/tv/${id}/${s}/${e}` },
-  { id:'embsu',   name:'Embed.su',   fn:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
-  { id:'2emb',    name:'2Embed',     fn:(id,s,e)=>`https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
-  { id:'supemb',  name:'SuperEmbed', fn:(id,s,e)=>`https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-  { id:'vsme',    name:'VidSrc',     fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
   { id:'vsto',    name:'VidSrc .to', fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
   { id:'vsfyi',   name:'VidSrc FYI', fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
 ];
@@ -67,6 +61,21 @@ async function api(path, params={}) {
   const r = await fetch(`${TBASE}${path}?${p}`);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
+}
+
+/* ═══════════════════════════════════════════════
+   EPISODE RELEASE HELPERS
+   TMDB lists future/announced episodes with an air_date
+   in the future (or missing entirely) — those shouldn't
+   be selectable or playable yet.
+═══════════════════════════════════════════════ */
+function isReleased(ep){
+  if (!ep || !ep.air_date) return false; // no confirmed date = not out yet
+  return new Date(ep.air_date + 'T00:00:00').getTime() <= Date.now();
+}
+function formatAirDate(str){
+  try{ return new Date(str + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}); }
+  catch{ return str; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -233,8 +242,13 @@ async function openModal(id, type='movie') {
   ['mtitle','moverview'].forEach(i=>document.getElementById(i).textContent='Loading…');
   document.getElementById('mmeta').innerHTML='';
   document.getElementById('mimg').src='';
-  document.getElementById('msrcs').innerHTML='';
+  document.getElementById('msrcsList').innerHTML='';
+  document.getElementById('msrcsCurrent').textContent='Loading…';
+  closeSrcDD('m');
   document.getElementById('epPicker').style.display='none';
+  const mplayBtn = document.getElementById('mplay');
+  mplayBtn.classList.remove('btn-disabled');
+  mplayBtn.disabled = false;
   try {
     const path = type==='movie' ? `/movie/${id}` : `/tv/${id}`;
     const [det, vids] = await Promise.all([api(path), api(`${path}/videos`)]);
@@ -290,55 +304,107 @@ function buildSeasonSelector(showId, showName){
   loadEpisodes();
 }
 
+let curEpsCache = []; // episodes for the season currently shown in the modal dropdown
+
 async function loadEpisodes(){
   const sel=document.getElementById('seasonSel');
   curSeason=parseInt(sel.value);
   curEpisode=1;
-  const grid=document.getElementById('epGrid');
-  grid.innerHTML='<span style="color:var(--muted);font-size:12px">Loading…</span>';
+  const epSel=document.getElementById('episodeSel');
+  epSel.innerHTML='<option>Loading…</option>';
+  epSel.disabled=true;
   try{
     const d=await api(`/tv/${curId}/season/${curSeason}`);
-    const eps=d.episodes||[];
-    document.getElementById('epCount').textContent=`${eps.length} episode${eps.length!==1?'s':''}`;
-    grid.innerHTML='';
-    eps.forEach(ep=>{
-      const b=document.createElement('button');
-      b.className='ep-btn'+(ep.episode_number===1?' on':'');
-      b.textContent=`Ep ${ep.episode_number}`;
-      b.title=ep.name||`Episode ${ep.episode_number}`;
-      b.onclick=()=>{
-        curEpisode=ep.episode_number;
-        document.querySelectorAll('.ep-btn').forEach(x=>x.classList.remove('on'));
-        b.classList.add('on');
-        // update play button behaviour
-        const showName=document.getElementById('mtitle').textContent;
-        document.getElementById('mplay').onclick=()=>{
-          closeModal();
-          openPlayer(curId,'tv',`${showName} — S${String(curSeason).padStart(2,'0')}E${String(curEpisode).padStart(2,'0')}`);
-        };
-      };
-      grid.appendChild(b);
+    curEpsCache = d.episodes||[];
+    epSel.innerHTML='';
+    curEpsCache.forEach(ep=>{
+      const released = isReleased(ep);
+      const o=document.createElement('option');
+      o.value=ep.episode_number;
+      o.textContent=`Ep ${ep.episode_number} — ${ep.name||'Episode '+ep.episode_number}` + (released?'':'  (Unreleased)');
+      if (!released) o.disabled = true;
+      epSel.appendChild(o);
     });
-    // also reset play for ep 1
-    const showName=document.getElementById('mtitle').textContent;
-    document.getElementById('mplay').onclick=()=>{
-      closeModal();
-      openPlayer(curId,'tv',`${showName} — S${String(curSeason).padStart(2,'0')}E${String(curEpisode).padStart(2,'0')}`);
-    };
-  } catch{ grid.innerHTML='<span style="color:var(--muted);font-size:12px">Could not load episodes.</span>'; }
+    epSel.disabled=false;
+    // Default to the most recently aired episode rather than always Ep 1 —
+    // if Ep 1 of this season hasn't released yet, this correctly lands on
+    // "nothing to watch" instead of silently picking an unreleased episode.
+    const lastReleased = [...curEpsCache].reverse().find(isReleased);
+    curEpisode = lastReleased ? lastReleased.episode_number : (curEpsCache[0]?.episode_number || 1);
+    epSel.value = curEpisode;
+    pickEpisode();
+  } catch{
+    epSel.innerHTML='<option>Could not load episodes</option>';
+    document.getElementById('epCurrentDesc').textContent='';
+  }
 }
+
+function pickEpisode(){
+  const epSel=document.getElementById('episodeSel');
+  curEpisode=parseInt(epSel.value)||1;
+  const ep = curEpsCache.find(e=>e.episode_number===curEpisode);
+  const playBtn = document.getElementById('mplay');
+  const released = isReleased(ep);
+
+  if (!released){
+    document.getElementById('epCurrentDesc').textContent = ep?.air_date
+      ? `This episode hasn't been released yet — airs ${formatAirDate(ep.air_date)}.`
+      : `This episode hasn't been released yet.`;
+    playBtn.classList.add('btn-disabled');
+    playBtn.disabled = true;
+    playBtn.onclick = null;
+    return;
+  }
+
+  document.getElementById('epCurrentDesc').textContent = ep?.overview || '';
+  playBtn.classList.remove('btn-disabled');
+  playBtn.disabled = false;
+  const showName=document.getElementById('mtitle').textContent;
+  playBtn.onclick=()=>{
+    closeModal();
+    openPlayer(curId,'tv',`${showName} — S${String(curSeason).padStart(2,'0')}E${String(curEpisode).padStart(2,'0')}`, curSrc);
+  };
+}
+
+/* ═══════════════════════════════════════════════
+   SOURCE DROPDOWN (shared by modal + player)
+   Replaces the old wall-of-buttons server picker with a
+   single compact control — much less clutter, same 10 sources.
+═══════════════════════════════════════════════ */
+let srcDDState = { m:false, p:false };
+
+function toggleSrcDD(which){
+  const open = !srcDDState[which];
+  closeSrcDD('m'); closeSrcDD('p'); // only one open at a time
+  srcDDState[which] = open;
+  const dd = document.getElementById(which==='m' ? 'msrcsDD' : 'psrcsDD');
+  dd?.classList.toggle('open', open);
+}
+function closeSrcDD(which){
+  srcDDState[which] = false;
+  document.getElementById(which==='m' ? 'msrcsDD' : 'psrcsDD')?.classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#msrcsDD')) closeSrcDD('m');
+  if (!e.target.closest('#psrcsDD')) closeSrcDD('p');
+});
 
 function buildSrcBtns(id, type, title){
   const srcs = type==='movie' ? MOVIE_SRCS : TV_SRCS;
-  const el=document.getElementById('msrcs');
-  el.innerHTML='';
+  const listEl = document.getElementById('msrcsList');
+  const curEl  = document.getElementById('msrcsCurrent');
+  listEl.innerHTML='';
+  curEl.textContent = srcs[curSrc]?.name || srcs[0].name;
   srcs.forEach((s,i)=>{
     const b=document.createElement('button');
-    b.className='sbtn'+(i===0?' on':'');
-    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>${s.name}`;
+    b.type='button';
+    b.className='src-dd-item'+(i===curSrc?' on':'');
+    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
     b.onclick=()=>{
       curSrc=i;
-      document.querySelectorAll('.sbtn').forEach((x,j)=>x.classList.toggle('on',j===i));
+      curEl.textContent = s.name;
+      listEl.querySelectorAll('.src-dd-item').forEach((x,j)=>x.classList.toggle('on',j===i));
+      closeSrcDD('m');
       // update play button
       if(type==='movie'){
         document.getElementById('mplay').onclick=()=>{ closeModal(); openPlayer(id,'movie',title,i); };
@@ -347,11 +413,11 @@ function buildSrcBtns(id, type, title){
         document.getElementById('mplay').onclick=()=>{ closeModal(); openPlayer(id,'tv',`${t} — S${String(curSeason).padStart(2,'0')}E${String(curEpisode).padStart(2,'0')}`,i); };
       }
     };
-    el.appendChild(b);
+    listEl.appendChild(b);
   });
 }
 
-function closeModal(){ document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; closeSrcDD('m'); }
 function bgClose(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
 /* ═══════════════════════════════════════════════
@@ -365,6 +431,7 @@ function openPlayer(id, type, label, srcIdx=0){
     : srcs[srcIdx].fn(id, curSeason, curEpisode);
   document.getElementById('frame').src = url;
   document.getElementById('ptitle').textContent = label||'';
+  document.getElementById('psrcsWrap').style.display='';
   document.getElementById('player').classList.add('open');
   document.body.style.overflow='hidden';
   showPlayerHint();
@@ -400,27 +467,49 @@ function openPlayer(id, type, label, srcIdx=0){
 
 function buildPlayerSrcs(id, type, label, active){
   const srcs = type==='movie' ? MOVIE_SRCS : TV_SRCS;
-  const el=document.getElementById('psrcs');
-  el.innerHTML='';
+  const listEl = document.getElementById('psrcsList');
+  const curEl  = document.getElementById('psrcsCurrent');
+  listEl.innerHTML='';
+  curEl.textContent = srcs[active]?.name || srcs[0].name;
   srcs.forEach((s,i)=>{
     const b=document.createElement('button');
-    b.className='psb'+(i===active?' on':'');
-    b.textContent=s.name;
+    b.type='button';
+    b.className='src-dd-item'+(i===active?' on':'');
+    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
     b.onclick=()=>{
       curSrc = i;
       document.getElementById('frame').src = type==='movie'
         ? srcs[i].fn(id)
         : srcs[i].fn(id, curSeason, curEpisode);
-      el.querySelectorAll('.psb').forEach((x,j)=>x.classList.toggle('on',j===i));
+      curEl.textContent = s.name;
+      listEl.querySelectorAll('.src-dd-item').forEach((x,j)=>x.classList.toggle('on',j===i));
+      closeSrcDD('p');
+      showPlayerHint();
     };
-    el.appendChild(b);
+    listEl.appendChild(b);
   });
+}
+
+// One-tap fallback: since third-party embeds go down unpredictably and a
+// cross-origin iframe can't be checked for load success, the fastest fix is
+// letting the person cycle straight to the next server without opening the
+// dropdown and hunting through it.
+function switchToNextSrc(){
+  const srcs = curType==='movie' ? MOVIE_SRCS : TV_SRCS;
+  curSrc = (curSrc + 1) % srcs.length;
+  document.getElementById('frame').src = curType==='movie'
+    ? srcs[curSrc].fn(curId)
+    : srcs[curSrc].fn(curId, curSeason, curEpisode);
+  document.getElementById('psrcsCurrent').textContent = srcs[curSrc].name;
+  document.querySelectorAll('#psrcsList .src-dd-item').forEach((x,j)=>x.classList.toggle('on',j===curSrc));
+  toast(`Switched to ${srcs[curSrc].name}`);
+  showPlayerHint();
 }
 
 function openFrameDirect(url, label){
   document.getElementById('frame').src=url;
   document.getElementById('ptitle').textContent=label||'';
-  document.getElementById('psrcs').innerHTML='';
+  document.getElementById('psrcsWrap').style.display='none';
   document.getElementById('pepCtrls').style.display='none';
   document.getElementById('player').classList.add('open');
   document.body.style.overflow='hidden';
@@ -429,6 +518,7 @@ function closePlayer(){
   document.getElementById('player').classList.remove('open');
   document.getElementById('frame').src='';
   document.body.style.overflow='';
+  closeSrcDD('p');
   // close episode panel if open
   if (pepPanelOpen){
     document.getElementById('pepPanel').classList.remove('open');
@@ -485,19 +575,24 @@ async function playerLoadSeason(switchOnSelect=true){
     }
     curEpsList.forEach(ep => {
       const isActive = (seasonNum === curSeason && ep.episode_number === curEpisode);
+      const released = isReleased(ep);
       const stillImg = ep.still_path
         ? `${IMG}/w300${ep.still_path}`
         : `https://placehold.co/300x170/141924/8a96a8?text=Ep+${ep.episode_number}`;
       const card = document.createElement('div');
-      card.className = 'pep-card' + (isActive ? ' on' : '');
+      card.className = 'pep-card' + (isActive ? ' on' : '') + (released ? '' : ' pep-locked');
       card.innerHTML = `
         <div class="pep-thumb-wrap">
           <img class="pep-thumb" src="${stillImg}" alt="Episode ${ep.episode_number}" loading="lazy">
           <div class="pep-num">EP ${ep.episode_number}</div>
-          ${isActive ? '<div class="pep-now">NOW PLAYING</div>' : '<div class="pep-play"><svg width="22" height="22" fill="#fff" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>'}
+          ${!released
+            ? `<div class="pep-soon">${ep.air_date ? 'Airs '+formatAirDate(ep.air_date) : 'Coming Soon'}</div>`
+            : (isActive ? '<div class="pep-now">NOW PLAYING</div>' : '<div class="pep-play"><svg width="22" height="22" fill="#fff" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>')}
         </div>
         <div class="pep-card-title">${ep.name || 'Episode ' + ep.episode_number}</div>`;
-      card.onclick = () => playerSwitchEp(seasonNum, ep.episode_number);
+      card.onclick = released
+        ? () => playerSwitchEp(seasonNum, ep.episode_number)
+        : () => toast(ep.air_date ? `This episode airs ${formatAirDate(ep.air_date)}` : `This episode hasn't been released yet.`);
       grid.appendChild(card);
     });
   } catch(e){
@@ -539,21 +634,27 @@ function playNextEp(){
   // Look up index in current season
   const idx = curEpsList.findIndex(ep => ep.episode_number === curEpisode);
   if (idx >= 0 && idx < curEpsList.length - 1){
-    playerSwitchEp(curSeason, curEpsList[idx + 1].episode_number);
+    const next = curEpsList[idx + 1];
+    if (!isReleased(next)){
+      toast(next.air_date ? `Next episode airs ${formatAirDate(next.air_date)}` : `Next episode hasn't been released yet.`);
+      return;
+    }
+    playerSwitchEp(curSeason, next.episode_number);
     return;
   }
   // End of season → try next season
   const seasonIdx = tvSeasons.findIndex(s => s.season_number === curSeason);
   if (seasonIdx >= 0 && seasonIdx < tvSeasons.length - 1){
     const nextSeason = tvSeasons[seasonIdx + 1].season_number;
-    // Load next season's episodes then play E01
+    // Load next season's episodes then play its first released episode
     document.getElementById('pepSeasonSel').value = nextSeason;
     api(`/tv/${curId}/season/${nextSeason}`).then(d => {
       curEpsList = d.episodes || [];
-      if (curEpsList.length){
-        playerSwitchEp(nextSeason, curEpsList[0].episode_number);
+      const firstReleased = curEpsList.find(isReleased);
+      if (firstReleased){
+        playerSwitchEp(nextSeason, firstReleased.episode_number);
       } else {
-        toast('No more episodes.');
+        toast('The next season hasn\'t been released yet.');
       }
     }).catch(() => toast('Could not load next season.'));
     return;
@@ -575,9 +676,9 @@ function playPrevEp(){
     document.getElementById('pepSeasonSel').value = prevSeason;
     api(`/tv/${curId}/season/${prevSeason}`).then(d => {
       curEpsList = d.episodes || [];
-      if (curEpsList.length){
-        const lastEp = curEpsList[curEpsList.length - 1].episode_number;
-        playerSwitchEp(prevSeason, lastEp);
+      const releasedEps = curEpsList.filter(isReleased);
+      if (releasedEps.length){
+        playerSwitchEp(prevSeason, releasedEps[releasedEps.length - 1].episode_number);
       } else {
         toast('No previous episodes.');
       }
@@ -588,14 +689,18 @@ function playPrevEp(){
 }
 
 function refreshPepButtons(){
-  // Disable Prev if we're at S1E1, Next if at final season's final episode
+  // Disable Prev if we're at S1E1, Next if the next episode hasn't aired
+  // yet or we've reached the final released episode of the final season.
   const prevBtn = document.getElementById('pepPrev');
   const nextBtn = document.getElementById('pepNext');
   if (!prevBtn || !nextBtn) return;
   const idx = curEpsList.findIndex(ep => ep.episode_number === curEpisode);
   const seasonIdx = tvSeasons.findIndex(s => s.season_number === curSeason);
   const atStart = (idx <= 0) && (seasonIdx <= 0);
-  const atEnd   = (idx === curEpsList.length - 1) && (seasonIdx === tvSeasons.length - 1);
+  const nextInSeason = idx >= 0 ? curEpsList[idx + 1] : null;
+  const atEnd = nextInSeason
+    ? !isReleased(nextInSeason)
+    : (seasonIdx === tvSeasons.length - 1);
   prevBtn.classList.toggle('disabled', atStart);
   nextBtn.classList.toggle('disabled', atEnd);
 }

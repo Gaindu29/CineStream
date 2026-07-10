@@ -100,8 +100,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* MODAL */
 #modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.84);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .28s;padding:16px}
 #modal.open{opacity:1;pointer-events:all}
-.mbox{position:relative;background:var(--bg2);border-radius:14px;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:860px;max-height:92vh;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 100px rgba(0,0,0,.8);transform:scale(.94);transition:transform .28s;}
+.mbox{position:relative;background:var(--bg2);border-radius:14px;overflow:hidden;width:100%;max-width:860px;max-height:92vh;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 100px rgba(0,0,0,.8);transform:scale(.94);transition:transform .28s;}
 #modal.open .mbox{transform:scale(1)}
+/* Scrolling lives on this INNER element, separate from the transformed/animated
+   .mbox above it. A transform + overflow:auto on the same element is a known
+   iOS Safari bug that silently blocks touch scrolling — splitting them fixes it. */
+.mbox-scroll{max-height:92vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .mbanner{position:relative;height:320px;overflow:hidden;flex-shrink:0}
 .mbanner img{width:100%;height:100%;object-fit:cover}
 .mbanner::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,var(--bg2) 0%,transparent 60%)}
@@ -115,18 +119,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* SOURCES */
 .src-section{border-top:1px solid rgba(255,255,255,.06);padding-top:18px}
 .src-lbl{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
-.srcs{display:flex;gap:7px;flex-wrap:wrap}
-.sbtn{padding:7px 14px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;background:var(--bg3);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer;transition:var(--ease);display:flex;align-items:center;gap:5px}
-.sbtn.on,.sbtn:hover{background:rgba(232,185,74,.12);border-color:var(--gold);color:var(--gold)}
 
-/* SEASON/EPISODE PICKER (TV) */
+/* SOURCE DROPDOWN — single compact control instead of a row of buttons */
+.src-dd{position:relative;display:inline-block;width:100%;max-width:260px}
+.src-dd-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--gold);cursor:pointer;transition:var(--ease)}
+.src-dd-btn:hover{border-color:var(--gold)}
+.src-dd-btn span:first-of-type{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src-dd-chev{margin-left:auto;flex-shrink:0;transition:transform var(--ease)}
+.src-dd.open .src-dd-chev{transform:rotate(180deg)}
+.src-dd-list{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px;max-height:260px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transform:translateY(-6px);transition:var(--ease);z-index:20}
+.src-dd.open .src-dd-list{opacity:1;pointer-events:all;transform:translateY(0)}
+.src-dd-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:6px;font-family:inherit;font-size:12.5px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;transition:var(--ease);text-align:left}
+.src-dd-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.src-dd-item.on{background:rgba(232,185,74,.12);color:var(--gold)}
+
+/* Player variant — dark pill on video, dropdown opens leftward-safe */
+.src-dd-player{max-width:170px}
+.src-dd-btn-player{padding:7px 10px;font-size:12px;background:rgba(0,0,0,.55);border-color:rgba(255,255,255,.18);color:var(--text);backdrop-filter:blur(6px)}
+.src-dd-tag{color:var(--muted);font-weight:500;font-size:11px}
+.src-dd-list-player{background:rgba(10,13,20,.97);backdrop-filter:blur(10px)}
+.src-next-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.18);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);flex-shrink:0}
+.src-next-btn:hover{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+
+/* SEASON/EPISODE PICKER (TV) — two compact dropdowns instead of a big grid */
 #epPicker{margin-top:18px;border-top:1px solid rgba(255,255,255,.06);padding-top:18px}
-.ep-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.ep-select{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--text);font-family:inherit;font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;outline:none;transition:var(--ease)}
+.ep-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.ep-select{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--text);font-family:inherit;font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;outline:none;transition:var(--ease);flex:1;min-width:150px}
 .ep-select:focus{border-color:var(--gold)}
-.ep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;max-height:180px;overflow-y:auto}
-.ep-btn{padding:8px 4px;border-radius:7px;font-family:inherit;font-size:12px;font-weight:600;background:var(--bg3);border:1px solid rgba(255,255,255,.07);color:var(--muted);cursor:pointer;transition:var(--ease);text-align:center}
-.ep-btn:hover,.ep-btn.on{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.ep-current{font-size:12.5px;color:var(--muted);line-height:1.5}
 .ep-lbl{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
 
 /* PLAYER */
@@ -137,10 +157,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .pbk{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);flex-shrink:0}
 .pbk:hover{background:rgba(255,255,255,.2)}
 .ptitle{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.psrcs{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.psb{padding:5px 12px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:var(--text);transition:var(--ease)}
-.psb.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
-.psb:hover:not(.on){background:rgba(255,255,255,.15)}
+.psrcs{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
 #frame{width:100%;height:100%;border:none}
 
 /* BROWSE PAGE */
@@ -225,21 +242,27 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   .mactions .btn{padding:8px 14px;font-size:12px;}
   .src-section{padding-top:10px!important;}
   .src-lbl{font-size:10px;margin-bottom:6px!important;}
-  .srcs{gap:6px;}
-  .sbtn{padding:5px 10px;font-size:11px;}
+  .src-dd{max-width:100%;}
+  .src-dd-btn{padding:8px 10px;font-size:12px;}
   .mclose{top:10px;right:10px;width:32px;height:32px;font-size:16px;}
   /* compact meta on mobile */
   .mmeta{gap:6px;margin-bottom:10px;}
   .mmeta .b{padding:2px 7px;font-size:10px;}
   /* episode picker — compact */
-  .ep-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));max-height:130px;}
+  .ep-row{gap:8px;}
+  .ep-select{font-size:12px;padding:7px 10px;min-width:0;}
   #epPicker{margin-top:10px!important;padding-top:10px!important;}
   .ep-lbl{font-size:10px;}
 
   /* ── PLAYER ── */
-  .ptop{padding:10px 14px;}
-  .ptitle{font-size:16px;}
-  .psb{padding:4px 10px;font-size:11px;}
+  .ptop{padding:10px 12px;gap:8px;}
+  .ptitle{font-size:14px;flex-shrink:1;min-width:0;}
+  .src-dd-player{max-width:104px;}
+  .src-dd-btn-player{padding:6px 8px;font-size:11px;gap:4px;}
+  .src-dd-tag{display:none;}
+  .src-dd-list-player{left:auto;right:0;width:170px;}
+  .src-next-btn{width:34px;height:34px;}
+  .psrcs{gap:6px;}
   #playerHint{font-size:12px;padding:20px 14px 14px;}
 
   /* ── FEEDBACK BTN ── */
@@ -697,6 +720,27 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   overflow:hidden;
 }
 .pep-card.on .pep-card-title{color:var(--gold)}
+
+/* Locked / unreleased episode — dimmed thumbnail, no play affordance */
+.pep-card.pep-locked{cursor:not-allowed}
+.pep-card.pep-locked .pep-thumb{opacity:.35;filter:grayscale(.4)}
+.pep-card.pep-locked:hover{border-color:transparent}
+.pep-card.pep-locked:hover .pep-thumb{transform:none;opacity:.35}
+.pep-card.pep-locked .pep-card-title{color:var(--muted)}
+.pep-soon{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  background:rgba(8,11,16,.55);
+  color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.3px;
+  padding:8px;
+}
+
+/* Disabled Watch Now (episode hasn't aired yet) */
+.btn-disabled,.btn-disabled:hover{
+  opacity:.4;cursor:not-allowed;pointer-events:none;
+  transform:none!important;box-shadow:none!important;
+}
+
 .pep-loading{
   color:var(--muted);font-size:13px;
   text-align:center;padding:24px 0;
