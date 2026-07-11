@@ -184,12 +184,19 @@
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
     </div>
+    <button class="pfull" id="pFull" onclick="toggleFullscreen()" title="Fullscreen">
+      <svg id="pFullIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
   </div>
   <div id="playerHint">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span>If this source doesn't load, tap <strong>Next Server</strong> or pick one from the dropdown above.</span>
   </div>
-  <iframe id="frame" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+  <div id="frameLoader">
+    <div class="frame-spinner"></div>
+    <p>Loading server…</p>
+  </div>
+  <iframe id="frame" allowfullscreen webkit-allowfullscreen mozallowfullscreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
 
   <!-- EPISODE PANEL (slides in from right, TV only) -->
   <div id="pepPanel">

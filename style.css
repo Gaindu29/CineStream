@@ -156,13 +156,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* PLAYER */
 #player{position:fixed;inset:0;z-index:3000;background:#000;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .35s}
 #player.open{opacity:1;pointer-events:all}
-.ptop{padding:14px 22px;display:flex;align-items:center;gap:14px;background:linear-gradient(to bottom,rgba(0,0,0,.88),transparent);position:absolute;top:0;left:0;right:0;z-index:1;pointer-events:none}
+.ptop{padding:14px 22px;display:flex;align-items:center;gap:14px;background:linear-gradient(to bottom,rgba(0,0,0,.88),transparent);position:absolute;top:0;left:0;right:0;z-index:2;pointer-events:none}
 .ptop>*{pointer-events:all}
 .pbk{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);flex-shrink:0}
 .pbk:hover{background:rgba(255,255,255,.2)}
 .ptitle{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .psrcs{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pfull{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);flex-shrink:0}
+.pfull:hover{background:rgba(255,255,255,.22)}
 #frame{width:100%;height:100%;border:none}
+
+/* FRAME LOADER */
+#frameLoader{position:absolute;inset:0;z-index:1;background:rgba(8,11,16,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .3s}
+#frameLoader.show{opacity:1}
+#frameLoader p{font-size:13px;color:var(--muted)}
+.frame-spinner{width:44px;height:44px;border-radius:50%;border:3px solid rgba(232,185,74,.2);border-top-color:var(--gold);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* BROWSE PAGE */
 #browse{display:none;padding:88px 44px 56px;min-height:100vh}
@@ -267,6 +276,7 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   .src-dd-list-player{left:auto;right:0;width:170px;}
   .src-next-btn{width:34px;height:34px;}
   .psrcs{gap:6px;}
+  .pfull{display:none;}
   #playerHint{font-size:12px;padding:20px 14px 14px;}
 
   /* ── FEEDBACK BTN ── */

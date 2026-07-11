@@ -574,6 +574,11 @@ function openFrameDirect(url, label){
 function closePlayer(){
   document.getElementById('player').classList.remove('open');
   document.getElementById('frame').src='';
+  hideFrameLoader();
+  // exit fullscreen if active
+  if (document.fullscreenElement || document.webkitFullscreenElement){
+    (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+  }
   unlockBodyScroll();
   closeSrcDD('p');
   // close episode panel if open
@@ -981,6 +986,64 @@ document.addEventListener('keydown',e=>{
 });
 
 
+
+/* ═══════════════════════════════════════════════
+   FULLSCREEN
+═══════════════════════════════════════════════ */
+function toggleFullscreen(){
+  const el = document.getElementById('player');
+  const inFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!inFs){
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) req.call(el);
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document);
+  }
+}
+function _syncFullscreenIcon(){
+  const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const icon = document.getElementById('pFullIcon');
+  if (!icon) return;
+  icon.innerHTML = inFs
+    ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>'
+    : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+}
+document.addEventListener('fullscreenchange', _syncFullscreenIcon);
+document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
+
+/* ═══════════════════════════════════════════════
+   FRAME LOADER — spinner shown while iframe loads
+═══════════════════════════════════════════════ */
+let frameLoadTimer = null;
+function showFrameLoader(){
+  clearTimeout(frameLoadTimer);
+  document.getElementById('frameLoader').classList.add('show');
+  // After 14s without a load event, hide spinner and nudge user
+  frameLoadTimer = setTimeout(()=>{
+    document.getElementById('frameLoader').classList.remove('show');
+    showPlayerHint();
+  }, 14000);
+}
+function hideFrameLoader(){
+  clearTimeout(frameLoadTimer);
+  document.getElementById('frameLoader').classList.remove('show');
+}
+(()=>{
+  const frame = document.getElementById('frame');
+  frame.addEventListener('load', ()=>{
+    if (frame.src && frame.src !== window.location.href) hideFrameLoader();
+  });
+  new MutationObserver(mutations => {
+    for (const m of mutations){
+      if (m.attributeName === 'src'){
+        const src = frame.getAttribute('src');
+        if (src && src !== '') showFrameLoader();
+        else hideFrameLoader();
+      }
+    }
+  }).observe(frame, { attributes:true, attributeFilter:['src'] });
+})();
 
 /* ═══════════════════════════════════════════════
    PLAYER HINT — auto-hides after 6s
