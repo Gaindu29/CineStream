@@ -21,26 +21,26 @@ const IMG  = 'https://image.tmdb.org/t/p';
 // increasingly unreliable / rotating domains. Add sources back here if
 // you find a new one worth testing.)
 const MOVIE_SRCS = [
-  { id:'vidfast',  name:'VidFast',     fn: id => `https://vidfast.pro/movie/${id}` },
-  { id:'vsme',     name:'VidSrc.me',   fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
-  { id:'vasy',     name:'Videasy',     fn: id => `https://player.videasy.net/movie/${id}` },
-  { id:'vsto',     name:'VidSrc.to',   fn: id => `https://vidsrc.to/embed/movie/${id}` },
-  { id:'vsxyz',    name:'VidSrc.xyz',  fn: id => `https://vidsrc.xyz/embed/movie?tmdb=${id}` },
-  { id:'vsfyi',    name:'VidSrc FYI',  fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
-  { id:'autoemb',  name:'AutoEmbed',   fn: id => `https://autoembed.cc/embed/movie/${id}` },
-  { id:'2emb',     name:'2Embed',      fn: id => `https://www.2embed.stream/embed/movie/${id}` },
-  { id:'smashy',   name:'Smashy',      fn: id => `https://player.smashy.stream/movie/${id}` },
+  { id:'vidfast',  name:'VidFast',     rec:true,  fn: id => `https://vidfast.pro/movie/${id}` },
+  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
+  { id:'vasy',     name:'Videasy',     rec:true,  fn: id => `https://player.videasy.net/movie/${id}` },
+  { id:'vsto',     name:'VidSrc.to',              fn: id => `https://vidsrc.to/embed/movie/${id}` },
+  { id:'vsxyz',    name:'VidSrc.xyz',             fn: id => `https://vidsrc.xyz/embed/movie?tmdb=${id}` },
+  { id:'vsfyi',    name:'VidSrc FYI',             fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
+  { id:'autoemb',  name:'AutoEmbed',              fn: id => `https://autoembed.cc/embed/movie/${id}` },
+  { id:'2emb',     name:'2Embed',                 fn: id => `https://www.2embed.stream/embed/movie/${id}` },
+  { id:'smashy',   name:'Smashy',                 fn: id => `https://player.smashy.stream/movie/${id}` },
 ];
 const TV_SRCS = [
-  { id:'vidfast',  name:'VidFast',     fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
-  { id:'vsme',     name:'VidSrc.me',   fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { id:'vasy',     name:'Videasy',     fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
-  { id:'vsto',     name:'VidSrc.to',   fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-  { id:'vsxyz',    name:'VidSrc.xyz',  fn:(id,s,e)=>`https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { id:'vsfyi',    name:'VidSrc FYI',  fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
-  { id:'autoemb',  name:'AutoEmbed',   fn:(id,s,e)=>`https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
-  { id:'2emb',     name:'2Embed',      fn:(id,s,e)=>`https://www.2embed.stream/embed/tv/${id}/${s}/${e}` },
-  { id:'smashy',   name:'Smashy',      fn:(id,s,e)=>`https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+  { id:'vidfast',  name:'VidFast',     rec:true,  fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
+  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { id:'vasy',     name:'Videasy',     rec:true,  fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
+  { id:'vsto',     name:'VidSrc.to',              fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
+  { id:'vsxyz',    name:'VidSrc.xyz',             fn:(id,s,e)=>`https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { id:'vsfyi',    name:'VidSrc FYI',             fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
+  { id:'autoemb',  name:'AutoEmbed',              fn:(id,s,e)=>`https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
+  { id:'2emb',     name:'2Embed',                 fn:(id,s,e)=>`https://www.2embed.stream/embed/tv/${id}/${s}/${e}` },
+  { id:'smashy',   name:'Smashy',                 fn:(id,s,e)=>`https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 ];
 
 const MG = {28:'Action',18:'Drama',35:'Comedy',27:'Horror',878:'Sci-Fi',10749:'Romance',53:'Thriller',16:'Animation',12:'Adventure',14:'Fantasy',80:'Crime',99:'Documentary'};
@@ -468,7 +468,7 @@ function buildSrcBtns(id, type, title){
     const b=document.createElement('button');
     b.type='button';
     b.className='src-dd-item'+(i===curSrc?' on':'');
-    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
+    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>${s.rec?'<span class="src-rec">Best</span>':''}`;
     b.onclick=()=>{
       curSrc=i;
       curEl.textContent = s.name;
@@ -544,7 +544,7 @@ function buildPlayerSrcs(id, type, label, active){
     const b=document.createElement('button');
     b.type='button';
     b.className='src-dd-item'+(i===active?' on':'');
-    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
+    b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>${s.rec?'<span class="src-rec">Best</span>':''}`;
     b.onclick=()=>{
       curSrc = i;
       document.getElementById('frame').src = type==='movie'

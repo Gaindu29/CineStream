@@ -136,6 +136,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .src-dd-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:6px;font-family:inherit;font-size:12.5px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;transition:var(--ease);text-align:left}
 .src-dd-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .src-dd-item.on{background:rgba(232,185,74,.12);color:var(--gold)}
+.src-rec{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.4px;padding:2px 6px;border-radius:4px;background:rgba(232,185,74,.13);color:var(--gold);border:1px solid rgba(232,185,74,.28);flex-shrink:0}
 
 /* Player variant — dark pill on video, dropdown opens leftward-safe */
 .src-dd-player{max-width:170px}
