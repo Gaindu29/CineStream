@@ -27,9 +27,6 @@ const MOVIE_SRCS = [
   { id:'vsto',     name:'VidSrc.to',              fn: id => `https://vidsrc.to/embed/movie/${id}` },
   { id:'vsxyz',    name:'VidSrc.xyz',             fn: id => `https://vidsrc.xyz/embed/movie?tmdb=${id}` },
   { id:'vsfyi',    name:'VidSrc FYI',             fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
-  { id:'autoemb',  name:'AutoEmbed',              fn: id => `https://autoembed.cc/embed/movie/${id}` },
-  { id:'2emb',     name:'2Embed',                 fn: id => `https://www.2embed.stream/embed/movie/${id}` },
-  { id:'smashy',   name:'Smashy',                 fn: id => `https://player.smashy.stream/movie/${id}` },
 ];
 const TV_SRCS = [
   { id:'vidfast',  name:'VidFast',     rec:true,  fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
@@ -38,9 +35,6 @@ const TV_SRCS = [
   { id:'vsto',     name:'VidSrc.to',              fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
   { id:'vsxyz',    name:'VidSrc.xyz',             fn:(id,s,e)=>`https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
   { id:'vsfyi',    name:'VidSrc FYI',             fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
-  { id:'autoemb',  name:'AutoEmbed',              fn:(id,s,e)=>`https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
-  { id:'2emb',     name:'2Embed',                 fn:(id,s,e)=>`https://www.2embed.stream/embed/tv/${id}/${s}/${e}` },
-  { id:'smashy',   name:'Smashy',                 fn:(id,s,e)=>`https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 ];
 
 const MG = {28:'Action',18:'Drama',35:'Comedy',27:'Horror',878:'Sci-Fi',10749:'Romance',53:'Thriller',16:'Animation',12:'Adventure',14:'Fantasy',80:'Crime',99:'Documentary'};
@@ -1040,19 +1034,6 @@ document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
 
 
 /* ═══════════════════════════════════════════════
-   SEEK FEEDBACK — show +/-Ns overlay on arrow key
-═══════════════════════════════════════════════ */
-function showSeekFeedback(secs){
-  const el = document.getElementById('seekFeedback');
-  if (!el) return;
-  el.textContent = secs > 0 ? `+${secs}s` : `${secs}s`;
-  el.classList.remove('pop');
-  void el.offsetWidth;
-  el.classList.add('pop');
-  try { document.getElementById('frame').contentWindow.postMessage({seek:secs},'*'); } catch(_){}
-}
-
-/* ═══════════════════════════════════════════════
    PLAYER UI AUTO-HIDE — overlay fades on inactivity
 ═══════════════════════════════════════════════ */
 let _uiTimer = null;
@@ -1407,22 +1388,14 @@ document.addEventListener('keydown', e => {
   if (!document.getElementById('player').classList.contains('open')) return;
   const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
   switch(e.key){
-    case 'f': case 'F':
-      e.preventDefault(); window.focus(); toggleFullscreen(); break;
     case 'Escape':
       if (!inFs){ e.preventDefault(); closePlayer(); } break;
     case 'n': case 'N':
       e.preventDefault(); switchToNextSrc(); break;
     case 'ArrowRight':
-      e.preventDefault();
-      if (e.shiftKey && curType === 'tv') triggerNextEp();
-      else showSeekFeedback(10);
-      break;
+      if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
     case 'ArrowLeft':
-      e.preventDefault();
-      if (e.shiftKey && curType === 'tv') playPrevEp();
-      else showSeekFeedback(-10);
-      break;
+      if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
   }
 });
 

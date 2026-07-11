@@ -174,23 +174,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 #player.ui-hidden .ptop>*{pointer-events:none!important}
 #player.ui-hidden{cursor:none}
 
-/* SEEK FEEDBACK OVERLAY */
-#seekFeedback{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  pointer-events:none;z-index:5;
-  font-family:'Bebas Neue',sans-serif;
-  font-size:58px;letter-spacing:2px;
-  color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.85);
-  opacity:0;user-select:none;white-space:nowrap;
-}
-#seekFeedback.pop{animation:seekPop .75s ease-out forwards}
-@keyframes seekPop{
-  0%  {opacity:1;transform:translate(-50%,-50%) scale(1.1)}
-  60% {opacity:1;transform:translate(-50%,-50%) scale(1)}
-  100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}
-}
-
 /* SPORTS PAGE */
 
 /* BROWSE PAGE */
