@@ -24,6 +24,7 @@
   <div class="nav-tabs">
     <div class="nav-tab on" id="tabMovies" onclick="switchTab('movie')">Movies</div>
     <div class="nav-tab"   id="tabTV"     onclick="switchTab('tv')">TV Series</div>
+    <div class="nav-tab"   id="tabSports" onclick="switchToSports()">Sports <span class="tab-live-dot"></span></div>
   </div>
   <ul class="nav-links">
     <li><a onclick="goHome()">Home</a></li>
@@ -102,6 +103,18 @@
     <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Crime &amp; Thriller</h2><span class="seeall" onclick="browseGenre(80,'Crime')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVCrime',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVCrime"></div><button class="row-arr arr-r" onclick="scrollRow('rTVCrime',1)" aria-label="Scroll right">&#8250;</button></div></div>
     <div class="sec" style="margin-top:30px"><div class="sec-hdr"><h2 class="sec-title">Animation</h2><span class="seeall" onclick="browseGenre(16,'Animation')">See all →</span></div><div class="row-wrap"><button class="row-arr arr-l" onclick="scrollRow('rTVAnim',-1)" aria-label="Scroll left">&#8249;</button><div class="row" id="rTVAnim"></div><button class="row-arr arr-r" onclick="scrollRow('rTVAnim',1)" aria-label="Scroll right">&#8250;</button></div></div>
   </div>
+</div>
+
+<!-- SPORTS PAGE -->
+<div id="sports">
+  <div class="sports-hero">
+    <h1 class="sports-hero-title">Live Sports</h1>
+    <button class="sports-refresh" onclick="loadSports()" title="Refresh">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+  </div>
+  <div class="sport-filter" id="sportFilter"></div>
+  <div id="sportsGrid" class="sports-grid"></div>
 </div>
 
 <!-- BROWSE/SEARCH PAGE -->
@@ -278,6 +291,10 @@
   <button id="mbTV" onclick="switchTab('tv');goHome();setMobileTab('tv')">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
     Series
+  </button>
+  <button id="mbSports" onclick="switchToSports();setMobileTab('sports')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    Sports
   </button>
   <button id="mbWatchlist" onclick="openWatchlist();setMobileTab('watchlist')">
     <span class="mb-icon">

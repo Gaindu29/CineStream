@@ -129,8 +129,10 @@ window.addEventListener('scroll', () =>
 ═══════════════════════════════════════════════ */
 function switchTab(m) {
   mode = m;
+  closeSports();
   document.getElementById('tabMovies').classList.toggle('on', m==='movie');
   document.getElementById('tabTV').classList.toggle('on',     m==='tv');
+  document.getElementById('tabSports').classList.remove('on');
   document.getElementById('movieRows').style.display = m==='movie' ? '' : 'none';
   document.getElementById('tvRows').style.display    = m==='tv'    ? '' : 'none';
   document.getElementById('navUpcoming').style.display = m==='movie' ? '' : 'none';
@@ -952,6 +954,10 @@ function closeBrowse(){
 function goHome(push=true){
   if(push) history.pushState({view:'home'},'');
   closeBrowse();
+  closeSports();
+  document.getElementById('tabSports').classList.remove('on');
+  document.getElementById('tabMovies').classList.toggle('on', mode==='movie');
+  document.getElementById('tabTV').classList.toggle('on', mode==='tv');
   document.getElementById('q').value='';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
 }
@@ -973,6 +979,8 @@ window.addEventListener('popstate', e => {
     document.getElementById('home').style.display='none';
     document.getElementById('watchlistPage').classList.add('open');
     renderWatchlist();
+  } else if (state.view === 'sports'){ setMobileTab('sports');
+    switchToSports(false);
   }
 });
 
@@ -1281,14 +1289,159 @@ function renderCWRow(){
 
 
 /* ══════════════════════════════════════════════════════════════
+   LIVE SPORTS
+══════════════════════════════════════════════════════════════ */
+const SPORTS_API  = 'https://streamed.su/api';
+const SPORTS_CORS = 'https://corsproxy.io/?url=';
+const SPORT_CATS = [
+  { id:'all',               label:'All Sports' },
+  { id:'football',          label:'Football' },
+  { id:'basketball',        label:'Basketball' },
+  { id:'american-football', label:'Am. Football' },
+  { id:'baseball',          label:'Baseball' },
+  { id:'hockey',            label:'Ice Hockey' },
+  { id:'tennis',            label:'Tennis' },
+  { id:'motor-sports',      label:'Motorsports' },
+  { id:'fight',             label:'Combat Sports' },
+  { id:'rugby',             label:'Rugby' },
+  { id:'golf',              label:'Golf' },
+  { id:'cricket',           label:'Cricket' },
+];
+const SPORT_LABEL = {
+  'football':'Football','basketball':'Basketball','american-football':'Am. Football',
+  'baseball':'Baseball','hockey':'Ice Hockey','tennis':'Tennis',
+  'motor-sports':'Motorsports','fight':'Combat Sports','rugby':'Rugby',
+  'golf':'Golf','cricket':'Cricket','other-sports':'Other'
+};
+
+let sportsData   = [];
+let sportFilter  = 'all';
+let sportsLoaded = false;
+
+function switchToSports(push=true){
+  if (push) history.pushState({ view:'sports' }, '');
+  document.getElementById('tabMovies').classList.remove('on');
+  document.getElementById('tabTV').classList.remove('on');
+  document.getElementById('tabSports').classList.add('on');
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('browse').classList.remove('open');
+  document.getElementById('watchlistPage').classList.remove('open');
+  document.getElementById('sports').classList.add('open');
+  if (!sportsLoaded) loadSports();
+}
+
+function closeSports(){
+  document.getElementById('sports').classList.remove('open');
+  document.getElementById('home').style.display = '';
+}
+
+async function loadSports(){
+  sportsLoaded = true;
+  const grid = document.getElementById('sportsGrid');
+  grid.innerHTML = '<div class="sports-loading"><div class="sports-spinner"></div><p>Fetching live events…</p></div>';
+  buildSportFilter();
+  try {
+    const proxy = u => `${SPORTS_CORS}${encodeURIComponent(u)}`;
+    const [liveRes, popRes] = await Promise.all([
+      fetch(proxy(`${SPORTS_API}/matches/live`)),
+      fetch(proxy(`${SPORTS_API}/matches/popular`))
+    ]);
+    const live = liveRes.ok ? await liveRes.json() : [];
+    const pop  = popRes.ok  ? await popRes.json()  : [];
+    const seen = new Set();
+    sportsData = [...live, ...pop].filter(m => {
+      if (seen.has(m.id) || !m.sources?.length) return false;
+      seen.add(m.id);
+      return true;
+    });
+    renderSportsGrid();
+  } catch(e) {
+    grid.innerHTML = '<div class="sports-empty">Could not load live events. Check your connection and try again.</div>';
+  }
+}
+
+function buildSportFilter(){
+  document.getElementById('sportFilter').innerHTML = SPORT_CATS.map(c =>
+    `<button class="sport-chip${c.id===sportFilter?' on':''}" onclick="filterSport('${c.id}')">${c.label}</button>`
+  ).join('');
+}
+
+function filterSport(cat){
+  sportFilter = cat;
+  buildSportFilter();
+  renderSportsGrid();
+}
+
+function renderSportsGrid(){
+  const grid = document.getElementById('sportsGrid');
+  const list = sportFilter === 'all'
+    ? sportsData
+    : sportsData.filter(m => m.category === sportFilter);
+  if (!list.length){
+    grid.innerHTML = '<div class="sports-empty">No live events right now for this sport.</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  list.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'sport-card';
+    card.innerHTML = `
+      <div class="sport-card-top">
+        <span class="sport-cat-badge">${SPORT_LABEL[m.category] || m.category}</span>
+        <span class="sport-live-badge"><span class="live-dot"></span>LIVE</span>
+      </div>
+      <div class="sport-card-title">${m.title}</div>
+      <div class="sport-card-foot">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${m.sources.length} stream${m.sources.length !== 1 ? 's' : ''} available
+      </div>`;
+    card.onclick = () => openSportsPlayer(m);
+    grid.appendChild(card);
+  });
+}
+
+function openSportsPlayer(match){
+  const sources = match.sources.map((src, i) => ({
+    name: `Stream ${i + 1}`,
+    url:  `https://embedme.top/embed/${src.source}/${src.id}/1`
+  }));
+  const frame = document.getElementById('frame');
+  frame.src = sources[0].url;
+  document.getElementById('ptitle').textContent = match.title;
+  document.getElementById('psrcsWrap').style.display = sources.length > 1 ? '' : 'none';
+  document.getElementById('pepCtrls').style.display = 'none';
+  document.getElementById('player').classList.add('open');
+  lockBodyScroll();
+  showPlayerHint();
+
+  const listEl = document.getElementById('psrcsList');
+  const curEl  = document.getElementById('psrcsCurrent');
+  listEl.innerHTML = '';
+  curEl.textContent = sources[0].name;
+  sources.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'src-dd-item' + (i === 0 ? ' on' : '');
+    b.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
+    b.onclick = () => {
+      frame.src = s.url;
+      curEl.textContent = s.name;
+      listEl.querySelectorAll('.src-dd-item').forEach((x, j) => x.classList.toggle('on', j === i));
+      closeSrcDD('p');
+    };
+    listEl.appendChild(b);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
    MOBILE BOTTOM TAB BAR
 ══════════════════════════════════════════════════════════════ */
 function setMobileTab(tab){
-  ['mbMovies','mbTV','mbWatchlist'].forEach(id=>{
+  ['mbMovies','mbTV','mbSports','mbWatchlist'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const map = {movies:'mbMovies', tv:'mbTV', watchlist:'mbWatchlist'};
+  const map = {movies:'mbMovies', tv:'mbTV', sports:'mbSports', watchlist:'mbWatchlist'};
   const el = document.getElementById(map[tab]);
   if (el) el.classList.add('active');
 }

@@ -168,6 +168,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 #frame{width:100%;height:100%;border:none}
 
 
+/* SPORTS PAGE */
+#sports{display:none;padding:88px 44px 56px;min-height:100vh}
+#sports.open{display:block}
+.sports-hero{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.sports-hero-title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:3px}
+.sports-refresh{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.sports-refresh:hover{background:rgba(255,255,255,.16)}
+.sport-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.sport-chip{padding:7px 16px;border-radius:20px;font-size:12.5px;font-weight:600;background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);cursor:pointer;transition:var(--ease)}
+.sport-chip:hover{color:var(--text);border-color:rgba(255,255,255,.25)}
+.sport-chip.on{background:rgba(232,185,74,.15);border-color:var(--gold);color:var(--gold)}
+.sports-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.sport-card{background:var(--bg2);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:18px;cursor:pointer;transition:var(--ease);display:flex;flex-direction:column;gap:10px}
+.sport-card:hover{border-color:rgba(255,255,255,.18);transform:translateY(-2px);background:var(--bg3)}
+.sport-card-top{display:flex;align-items:center;justify-content:space-between}
+.sport-cat-badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.07);padding:3px 8px;border-radius:4px}
+.sport-live-badge{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.5px;color:#e84040}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#e84040;flex-shrink:0;animation:livePulse 1.4s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.sport-card-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35}
+.sport-card-foot{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted)}
+.sports-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px 0;color:var(--muted);font-size:13px}
+.sports-spinner{width:40px;height:40px;border-radius:50%;border:3px solid rgba(232,185,74,.2);border-top-color:var(--gold);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sports-empty{text-align:center;padding:80px 0;color:var(--muted);font-size:14px}
+.tab-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#e84040;margin-left:4px;vertical-align:middle;animation:livePulse 1.4s ease-in-out infinite}
+
 /* BROWSE PAGE */
 #browse{display:none;padding:88px 44px 56px;min-height:100vh}
 #browse.open{display:block}
@@ -221,7 +248,11 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
 
   /* ── GRIDS ── */
   #browse{padding:70px 16px 100px;}
+  #sports{padding:70px 16px 100px;}
   #watchlistPage{padding:70px 16px 100px;}
+  .sports-grid{grid-template-columns:1fr;}
+  .sport-filter{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+  .sport-chip{flex-shrink:0;}
   .bgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
   .wl-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
   footer{padding:28px 16px;margin-bottom:70px;}
