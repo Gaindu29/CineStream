@@ -1019,11 +1019,9 @@ let frameLoadTimer = null;
 function showFrameLoader(){
   clearTimeout(frameLoadTimer);
   document.getElementById('frameLoader').classList.add('show');
-  // After 14s without a load event, hide spinner and nudge user
   frameLoadTimer = setTimeout(()=>{
     document.getElementById('frameLoader').classList.remove('show');
-    showPlayerHint();
-  }, 14000);
+  }, 4000);
 }
 function hideFrameLoader(){
   clearTimeout(frameLoadTimer);
@@ -1031,9 +1029,6 @@ function hideFrameLoader(){
 }
 (()=>{
   const frame = document.getElementById('frame');
-  frame.addEventListener('load', ()=>{
-    if (frame.src && frame.src !== window.location.href) hideFrameLoader();
-  });
   new MutationObserver(mutations => {
     for (const m of mutations){
       if (m.attributeName === 'src'){
