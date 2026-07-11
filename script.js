@@ -46,6 +46,38 @@ let heroList   = [], heroIdx = 0, heroTmr = null;
 let curId      = null, curType = 'movie';
 let curSrc     = 0;
 let curSeason  = 1, curEpisode = 1;
+
+/* ═══════════════════════════════════════════════
+   BODY SCROLL LOCK
+   Plain `body{overflow:hidden}` doesn't fully lock scrolling in Safari
+   and has been known to interfere with trackpad/touch gesture routing to
+   *nested* scrollable elements (e.g. a modal's own internal scroll area).
+   Locking via position:fixed is the standard, more reliable fix.
+═══════════════════════════════════════════════ */
+let bodyScrollY = 0;
+let bodyLockCount = 0;
+function lockBodyScroll(){
+  if (bodyLockCount === 0){
+    bodyScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${bodyScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.overflow = 'hidden';
+  }
+  bodyLockCount++;
+}
+function unlockBodyScroll(){
+  bodyLockCount = Math.max(0, bodyLockCount - 1);
+  if (bodyLockCount === 0){
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, bodyScrollY);
+  }
+}
 let tvSeasons  = [];
 
 // Player episode browsing state (TV only)
@@ -238,7 +270,7 @@ async function openModal(id, type='movie') {
   curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; refreshWLBtn();
   document.getElementById('modal').classList.add('open');
   document.getElementById('modalBackdrop').classList.add('open');
-  document.body.style.overflow='hidden';
+  lockBodyScroll();
   // reset
   ['mtitle','moverview'].forEach(i=>document.getElementById(i).textContent='Loading…');
   document.getElementById('mmeta').innerHTML='';
@@ -420,7 +452,7 @@ function buildSrcBtns(id, type, title){
   });
 }
 
-function closeModal(){ document.getElementById('modal').classList.remove('open'); document.getElementById('modalBackdrop').classList.remove('open'); document.body.style.overflow=''; closeSrcDD('m'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); document.getElementById('modalBackdrop').classList.remove('open'); unlockBodyScroll(); closeSrcDD('m'); }
 function bgClose(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
 /* ═══════════════════════════════════════════════
@@ -436,7 +468,7 @@ function openPlayer(id, type, label, srcIdx=0){
   document.getElementById('ptitle').textContent = label||'';
   document.getElementById('psrcsWrap').style.display='';
   document.getElementById('player').classList.add('open');
-  document.body.style.overflow='hidden';
+  lockBodyScroll();
   showPlayerHint();
   buildPlayerSrcs(id, type, label, srcIdx);
 
@@ -515,12 +547,12 @@ function openFrameDirect(url, label){
   document.getElementById('psrcsWrap').style.display='none';
   document.getElementById('pepCtrls').style.display='none';
   document.getElementById('player').classList.add('open');
-  document.body.style.overflow='hidden';
+  lockBodyScroll();
 }
 function closePlayer(){
   document.getElementById('player').classList.remove('open');
   document.getElementById('frame').src='';
-  document.body.style.overflow='';
+  unlockBodyScroll();
   closeSrcDD('p');
   // close episode panel if open
   if (pepPanelOpen){
@@ -944,13 +976,13 @@ function showPlayerHint(){
 ═══════════════════════════════════════════════ */
 function openFb(){
   document.getElementById('fbModal').classList.add('open');
-  document.body.style.overflow='hidden';
+  lockBodyScroll();
   document.getElementById('fbForm').style.display='';
   document.getElementById('fbSent').style.display='none';
 }
 function closeFb(){
   document.getElementById('fbModal').classList.remove('open');
-  document.body.style.overflow='';
+  unlockBodyScroll();
 }
 function fbBgClose(e){ if(e.target===document.getElementById('fbModal')) closeFb(); }
 
