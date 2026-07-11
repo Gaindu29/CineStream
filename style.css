@@ -304,7 +304,7 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   .src-dd-list-player{left:auto;right:0;width:170px;}
   .src-next-btn{width:34px;height:34px;}
   .psrcs{gap:6px;}
-  .pfull{display:none;}
+  .pfull{width:30px;height:30px;}
   #playerHint{font-size:12px;padding:20px 14px 14px;}
 
   /* ── FEEDBACK BTN ── */

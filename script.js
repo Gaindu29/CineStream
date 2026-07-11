@@ -494,19 +494,21 @@ function bgClose(e){ if(e.target===document.getElementById('modal')) closeModal(
 /* ═══════════════════════════════════════════════
    PLAYER
 ═══════════════════════════════════════════════ */
-function openPlayer(id, type, label, srcIdx=0){
-  curId=id; curType=type; curSrc=srcIdx;
+function openPlayer(id, type, label, srcIdx=null){
   const srcs = type==='movie' ? MOVIE_SRCS : TV_SRCS;
+  const resolved = Math.min(srcIdx ?? getSavedSrc(), srcs.length - 1);
+  curId=id; curType=type; curSrc=resolved;
+  saveSrc(resolved);
   const url   = type==='movie'
-    ? srcs[srcIdx].fn(id)
-    : srcs[srcIdx].fn(id, curSeason, curEpisode);
+    ? srcs[resolved].fn(id)
+    : srcs[resolved].fn(id, curSeason, curEpisode);
   document.getElementById('frame').src = url;
   document.getElementById('ptitle').textContent = label||'';
   document.getElementById('psrcsWrap').style.display='';
   document.getElementById('player').classList.add('open');
   lockBodyScroll();
   showPlayerHint();
-  buildPlayerSrcs(id, type, label, srcIdx);
+  buildPlayerSrcs(id, type, label, resolved);
 
   // Show / hide TV episode controls in player top bar
   const pepCtrls = document.getElementById('pepCtrls');
@@ -532,7 +534,7 @@ function openPlayer(id, type, label, srcIdx=0){
     backdrop: poster,   // mimg already shows the backdrop
     season:   type==='tv' ? curSeason  : null,
     episode:  type==='tv' ? curEpisode : null,
-    srcIdx
+    srcIdx:   resolved
   });
   startNepTimer();
 }
@@ -550,6 +552,7 @@ function buildPlayerSrcs(id, type, label, active){
     b.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>${s.rec?'<span class="src-rec">Best</span>':''}`;
     b.onclick=()=>{
       curSrc = i;
+      saveSrc(i);
       document.getElementById('frame').src = type==='movie'
         ? srcs[i].fn(id)
         : srcs[i].fn(id, curSeason, curEpisode);
@@ -569,6 +572,7 @@ function buildPlayerSrcs(id, type, label, active){
 function switchToNextSrc(){
   const srcs = curType==='movie' ? MOVIE_SRCS : TV_SRCS;
   curSrc = (curSrc + 1) % srcs.length;
+  saveSrc(curSrc);
   document.getElementById('frame').src = curType==='movie'
     ? srcs[curSrc].fn(curId)
     : srcs[curSrc].fn(curId, curSeason, curEpisode);
@@ -946,6 +950,9 @@ function makeBCard(m, type='movie'){
 function showBrowse(title, pushHistory=true){
   if(pushHistory) history.pushState({view:'browse', title}, '');
   document.getElementById('q').value='';
+  document.getElementById('sports').classList.remove('open');
+  document.getElementById('tabSports').classList.remove('on');
+  document.getElementById('watchlistPage').classList.remove('open');
   document.getElementById('home').style.display='none';
   document.getElementById('browse').classList.add('open');
   document.getElementById('browseTitle').textContent=title;
@@ -953,6 +960,8 @@ function showBrowse(title, pushHistory=true){
 function closeBrowse(){
   document.getElementById('browse').classList.remove('open');
   document.getElementById('home').style.display='';
+  document.getElementById('tabMovies').classList.toggle('on', mode==='movie');
+  document.getElementById('tabTV').classList.toggle('on', mode==='tv');
 }
 function goHome(push=true){
   if(push) history.pushState({view:'home'},'');
@@ -1352,7 +1361,17 @@ function dismissNepOverlay(){
 }
 
 /* ══════════════════════════════════════════════════════════════
-   KEYBOARD SHORTCUTS  (active only while player is open)
+   REMEMBERED SERVER  (persisted in localStorage as 'nf_src')
+══════════════════════════════════════════════════════════════ */
+function getSavedSrc(){
+  try{ const v = parseInt(localStorage.getItem('nf_src')); return isNaN(v) ? 0 : v; }catch{ return 0; }
+}
+function saveSrc(idx){
+  try{ localStorage.setItem('nf_src', idx); }catch{}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS + DOUBLE-TAP FULLSCREEN
 ══════════════════════════════════════════════════════════════ */
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
@@ -1371,6 +1390,20 @@ document.addEventListener('keydown', e => {
       if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
   }
 });
+
+// Double-tap the player area to toggle fullscreen on mobile
+let _dblTapTs = 0;
+document.getElementById('player').addEventListener('touchend', e => {
+  if (e.target.closest('button, .src-dd, input, select, a, #pepPanel')) return;
+  const now = Date.now();
+  if (now - _dblTapTs < 300){
+    e.preventDefault();
+    toggleFullscreen();
+    _dblTapTs = 0;
+  } else {
+    _dblTapTs = now;
+  }
+}, { passive: false });
 
 /* ══════════════════════════════════════════════════════════════
    LIVE SPORTS
