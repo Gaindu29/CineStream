@@ -423,6 +423,9 @@ function toggleSrcDD(which){
   const dd = document.getElementById(which==='m' ? 'msrcsDD' : 'psrcsDD');
   dd?.classList.toggle('open', open);
   if (open) scrollDropdownIntoView(dd);
+  // Iframes absorb pointer events regardless of z-index — disable them
+  // while the player dropdown is open so all list items are clickable.
+  if (which === 'p') document.getElementById('frame').style.pointerEvents = open ? 'none' : '';
 }
 // Brings a freshly-opened dropdown list fully into view within its scrollable
 // ancestor (the modal body) — since the list is absolutely positioned, it
@@ -448,6 +451,7 @@ function scrollDropdownIntoView(dd){
 function closeSrcDD(which){
   srcDDState[which] = false;
   document.getElementById(which==='m' ? 'msrcsDD' : 'psrcsDD')?.classList.remove('open');
+  if (which === 'p') document.getElementById('frame').style.pointerEvents = '';
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('#msrcsDD')) closeSrcDD('m');
