@@ -114,7 +114,15 @@
     </button>
   </div>
   <div class="sport-filter" id="sportFilter"></div>
-  <div id="sportsGrid" class="sports-grid"></div>
+  <div class="sports-section-hdr">
+    <span class="sport-live-badge"><span class="live-dot"></span>Live Now</span>
+  </div>
+  <div id="sportsLiveGrid" class="sports-grid"></div>
+  <div class="sports-section-hdr" id="recentHdr" style="display:none">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Recently Aired
+  </div>
+  <div id="sportsRecentGrid" class="sports-grid"></div>
 </div>
 
 <!-- BROWSE/SEARCH PAGE -->
@@ -201,6 +209,22 @@
       <svg id="pFullIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
     </button>
   </div>
+  <!-- NEXT EPISODE OVERLAY (TV only) -->
+  <div id="nextEpOverlay">
+    <button class="nep-dismiss" onclick="dismissNepOverlay()" title="Dismiss">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="nep-label">Up Next</div>
+    <div class="nep-title" id="nepTitle"></div>
+    <div class="nep-actions">
+      <button class="nep-play" id="nepBtn" onclick="triggerNextEp()">
+        <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <span id="nepBtnText">Play Next</span>
+      </button>
+      <div class="nep-bar"><div class="nep-progress" id="nepBar"></div></div>
+    </div>
+  </div>
+
   <div id="playerHint">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span>If this source doesn't load, tap <strong>Next Server</strong> or pick one from the dropdown above.</span>

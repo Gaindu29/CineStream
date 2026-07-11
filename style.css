@@ -184,7 +184,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sport-card:hover{border-color:rgba(255,255,255,.18);transform:translateY(-2px);background:var(--bg3)}
 .sport-card-top{display:flex;align-items:center;justify-content:space-between}
 .sport-cat-badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.07);padding:3px 8px;border-radius:4px}
+.sports-section-hdr{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:28px 0 14px}
 .sport-live-badge{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.5px;color:#e84040}
+.sport-aired-badge{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--muted);background:rgba(255,255,255,.07);padding:2px 7px;border-radius:4px}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#e84040;flex-shrink:0;animation:livePulse 1.4s ease-in-out infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
 .sport-card-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35}
@@ -319,19 +321,19 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
   border-top:1px solid rgba(255,255,255,.08);
   height:62px;
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   align-items:center;
 }
 #mobileNav button{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;background:none;border:none;color:var(--muted);
-  font-family:inherit;font-size:10px;font-weight:600;
+  gap:3px;background:none;border:none;color:var(--muted);
+  font-family:inherit;font-size:9px;font-weight:600;
   cursor:pointer;transition:color var(--ease);
   padding:0;height:100%;
-  letter-spacing:.3px;
+  letter-spacing:.2px;
 }
+#mobileNav button svg{width:18px;height:18px;flex-shrink:0;}
 #mobileNav button.active{color:var(--gold);}
-#mobileNav button svg{flex-shrink:0;}
 .mb-badge{
   position:absolute;top:-3px;right:-6px;
   background:var(--gold);color:var(--bg);
@@ -350,6 +352,18 @@ footer{padding:44px 44px 28px;border-top:1px solid rgba(255,255,255,.05);margin-
 #playerHint{position:absolute;bottom:0;left:0;right:0;z-index:2;background:linear-gradient(to top,rgba(8,11,16,.95),transparent);padding:28px 24px 18px;display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(240,242,245,.7);transition:opacity .5s;pointer-events:none}
 #playerHint svg{flex-shrink:0;color:var(--gold)}
 #playerHint strong{color:var(--gold)}
+/* ── NEXT EPISODE OVERLAY ── */
+#nextEpOverlay{position:absolute;bottom:28px;right:24px;z-index:10;width:250px;background:rgba(8,11,16,.93);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 16px 14px;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .3s,transform .3s;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+#nextEpOverlay.show{opacity:1;pointer-events:all;transform:translateY(0)}
+.nep-dismiss{position:absolute;top:10px;right:10px;width:20px;height:20px;background:rgba(255,255,255,.08);border:none;border-radius:50%;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.nep-dismiss:hover{background:rgba(255,255,255,.16);color:var(--text)}
+.nep-label{font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.nep-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:13px;line-height:1.4;padding-right:20px}
+.nep-actions{display:flex;align-items:center;gap:10px}
+.nep-play{display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--gold);color:var(--bg);border:none;border-radius:7px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity var(--ease);flex-shrink:0}
+.nep-play:hover{opacity:.85}
+.nep-bar{flex:1;height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden}
+.nep-progress{height:100%;width:0;background:var(--gold);border-radius:2px;transition:width 1s linear}
 /* ── FEEDBACK BUTTON ── */
 #fbBtn{position:fixed;bottom:28px;left:28px;z-index:700;display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:24px;background:var(--bg3);border:1px solid rgba(232,185,74,.25);color:var(--gold);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:var(--ease);box-shadow:0 4px 20px rgba(0,0,0,.4)}
 #fbBtn:hover{background:rgba(232,185,74,.12);border-color:var(--gold)}
