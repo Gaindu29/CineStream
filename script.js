@@ -414,6 +414,28 @@ function toggleSrcDD(which){
   srcDDState[which] = open;
   const dd = document.getElementById(which==='m' ? 'msrcsDD' : 'psrcsDD');
   dd?.classList.toggle('open', open);
+  if (open) scrollDropdownIntoView(dd);
+}
+// Brings a freshly-opened dropdown list fully into view within its scrollable
+// ancestor (the modal body) — since the list is absolutely positioned, it
+// doesn't affect the ancestor's scroll height on its own, so we measure and
+// nudge the scroll position manually rather than relying on scrollIntoView.
+function scrollDropdownIntoView(dd){
+  if (!dd) return;
+  const list = dd.querySelector('.src-dd-list');
+  const scrollParent = dd.closest('.mbox-scroll');
+  if (!list || !scrollParent) return;
+  requestAnimationFrame(()=>{
+    const listRect = list.getBoundingClientRect();
+    const parentRect = scrollParent.getBoundingClientRect();
+    const overflowBottom = listRect.bottom - parentRect.bottom;
+    const overflowTop = parentRect.top - listRect.top;
+    if (overflowBottom > 0){
+      scrollParent.scrollBy({ top: overflowBottom + 12, behavior: 'smooth' });
+    } else if (overflowTop > 0){
+      scrollParent.scrollBy({ top: -(overflowTop + 12), behavior: 'smooth' });
+    }
+  });
 }
 function closeSrcDD(which){
   srcDDState[which] = false;
