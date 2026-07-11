@@ -237,6 +237,7 @@ function initTVRows(){
 async function openModal(id, type='movie') {
   curId=id; curType=type; curSrc=0; curSeason=1; curEpisode=1; refreshWLBtn();
   document.getElementById('modal').classList.add('open');
+  document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow='hidden';
   // reset
   ['mtitle','moverview'].forEach(i=>document.getElementById(i).textContent='Loading…');
@@ -326,11 +327,13 @@ async function loadEpisodes(){
       epSel.appendChild(o);
     });
     epSel.disabled=false;
-    // Default to the most recently aired episode rather than always Ep 1 —
-    // if Ep 1 of this season hasn't released yet, this correctly lands on
-    // "nothing to watch" instead of silently picking an unreleased episode.
-    const lastReleased = [...curEpsCache].reverse().find(isReleased);
-    curEpisode = lastReleased ? lastReleased.episode_number : (curEpsCache[0]?.episode_number || 1);
+    // Default to Episode 1 — only fall forward to a later episode if Ep 1
+    // itself hasn't aired yet (rare: mid-air unreleased opener).
+    const firstEp = curEpsCache[0];
+    const firstReleased = curEpsCache.find(isReleased);
+    curEpisode = firstEp
+      ? (isReleased(firstEp) ? firstEp.episode_number : (firstReleased ? firstReleased.episode_number : firstEp.episode_number))
+      : 1;
     epSel.value = curEpisode;
     pickEpisode();
   } catch{
@@ -417,7 +420,7 @@ function buildSrcBtns(id, type, title){
   });
 }
 
-function closeModal(){ document.getElementById('modal').classList.remove('open'); document.body.style.overflow=''; closeSrcDD('m'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); document.getElementById('modalBackdrop').classList.remove('open'); document.body.style.overflow=''; closeSrcDD('m'); }
 function bgClose(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
 /* ═══════════════════════════════════════════════
