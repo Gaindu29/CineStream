@@ -574,7 +574,6 @@ function openFrameDirect(url, label){
 function closePlayer(){
   document.getElementById('player').classList.remove('open');
   document.getElementById('frame').src='';
-  hideFrameLoader();
   // exit fullscreen if active
   if (document.fullscreenElement || document.webkitFullscreenElement){
     (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
@@ -1012,33 +1011,6 @@ function _syncFullscreenIcon(){
 document.addEventListener('fullscreenchange', _syncFullscreenIcon);
 document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
 
-/* ═══════════════════════════════════════════════
-   FRAME LOADER — spinner shown while iframe loads
-═══════════════════════════════════════════════ */
-let frameLoadTimer = null;
-function showFrameLoader(){
-  clearTimeout(frameLoadTimer);
-  document.getElementById('frameLoader').classList.add('show');
-  frameLoadTimer = setTimeout(()=>{
-    document.getElementById('frameLoader').classList.remove('show');
-  }, 4000);
-}
-function hideFrameLoader(){
-  clearTimeout(frameLoadTimer);
-  document.getElementById('frameLoader').classList.remove('show');
-}
-(()=>{
-  const frame = document.getElementById('frame');
-  new MutationObserver(mutations => {
-    for (const m of mutations){
-      if (m.attributeName === 'src'){
-        const src = frame.getAttribute('src');
-        if (src && src !== '') showFrameLoader();
-        else hideFrameLoader();
-      }
-    }
-  }).observe(frame, { attributes:true, attributeFilter:['src'] });
-})();
 
 /* ═══════════════════════════════════════════════
    PLAYER HINT — auto-hides after 6s
