@@ -129,10 +129,8 @@ window.addEventListener('scroll', () =>
 ═══════════════════════════════════════════════ */
 function switchTab(m) {
   mode = m;
-  closeSports();
   document.getElementById('tabMovies').classList.toggle('on', m==='movie');
   document.getElementById('tabTV').classList.toggle('on',     m==='tv');
-  document.getElementById('tabSports').classList.remove('on');
   document.getElementById('movieRows').style.display = m==='movie' ? '' : 'none';
   document.getElementById('tvRows').style.display    = m==='tv'    ? '' : 'none';
   document.getElementById('navUpcoming').style.display = m==='movie' ? '' : 'none';
@@ -537,6 +535,7 @@ function openPlayer(id, type, label, srcIdx=null){
     srcIdx:   resolved
   });
   startNepTimer();
+  showPlayerUI();
 }
 
 function buildPlayerSrcs(id, type, label, active){
@@ -592,7 +591,9 @@ function openFrameDirect(url, label){
 }
 function closePlayer(){
   clearNepTimers();
-  document.getElementById('player').classList.remove('open');
+  clearTimeout(_uiTimer);
+  const p = document.getElementById('player');
+  p.classList.remove('open','ui-hidden');
   document.getElementById('frame').src='';
   // exit fullscreen if active
   if (document.fullscreenElement || document.webkitFullscreenElement){
@@ -950,8 +951,6 @@ function makeBCard(m, type='movie'){
 function showBrowse(title, pushHistory=true){
   if(pushHistory) history.pushState({view:'browse', title}, '');
   document.getElementById('q').value='';
-  document.getElementById('sports').classList.remove('open');
-  document.getElementById('tabSports').classList.remove('on');
   document.getElementById('watchlistPage').classList.remove('open');
   document.getElementById('home').style.display='none';
   document.getElementById('browse').classList.add('open');
@@ -966,8 +965,6 @@ function closeBrowse(){
 function goHome(push=true){
   if(push) history.pushState({view:'home'},'');
   closeBrowse();
-  closeSports();
-  document.getElementById('tabSports').classList.remove('on');
   document.getElementById('tabMovies').classList.toggle('on', mode==='movie');
   document.getElementById('tabTV').classList.toggle('on', mode==='tv');
   document.getElementById('q').value='';
@@ -991,8 +988,6 @@ window.addEventListener('popstate', e => {
     document.getElementById('home').style.display='none';
     document.getElementById('watchlistPage').classList.add('open');
     renderWatchlist();
-  } else if (state.view === 'sports'){ setMobileTab('sports');
-    switchToSports(false);
   }
 });
 
@@ -1026,10 +1021,10 @@ function toggleFullscreen(){
   const inFs = document.fullscreenElement || document.webkitFullscreenElement;
   if (!inFs){
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (req) req.call(el);
+    if (req) req.call(el).catch(()=>{});
   } else {
     const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    if (exit) exit.call(document);
+    if (exit) exit.call(document).catch(()=>{});
   }
 }
 function _syncFullscreenIcon(){
@@ -1043,6 +1038,40 @@ function _syncFullscreenIcon(){
 document.addEventListener('fullscreenchange', _syncFullscreenIcon);
 document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
 
+
+/* ═══════════════════════════════════════════════
+   SEEK FEEDBACK — show +/-Ns overlay on arrow key
+═══════════════════════════════════════════════ */
+function showSeekFeedback(secs){
+  const el = document.getElementById('seekFeedback');
+  if (!el) return;
+  el.textContent = secs > 0 ? `+${secs}s` : `${secs}s`;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  try { document.getElementById('frame').contentWindow.postMessage({seek:secs},'*'); } catch(_){}
+}
+
+/* ═══════════════════════════════════════════════
+   PLAYER UI AUTO-HIDE — overlay fades on inactivity
+═══════════════════════════════════════════════ */
+let _uiTimer = null;
+function showPlayerUI(){
+  const p = document.getElementById('player');
+  p.classList.remove('ui-hidden');
+  window.focus();
+  clearTimeout(_uiTimer);
+  if (document.querySelector('.src-dd.open')) return; // keep visible while dropdown is open
+  _uiTimer = setTimeout(()=>{
+    if (p.classList.contains('open')) p.classList.add('ui-hidden');
+  }, 3000);
+}
+(function(){
+  const p = document.getElementById('player');
+  p.addEventListener('mouseenter', showPlayerUI);
+  p.addEventListener('mousemove',  showPlayerUI);
+  p.addEventListener('touchstart', showPlayerUI, {passive:true});
+})();
 
 /* ═══════════════════════════════════════════════
    PLAYER HINT — auto-hides after 6s
@@ -1379,15 +1408,21 @@ document.addEventListener('keydown', e => {
   const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
   switch(e.key){
     case 'f': case 'F':
-      e.preventDefault(); toggleFullscreen(); break;
+      e.preventDefault(); window.focus(); toggleFullscreen(); break;
     case 'Escape':
       if (!inFs){ e.preventDefault(); closePlayer(); } break;
     case 'n': case 'N':
       e.preventDefault(); switchToNextSrc(); break;
     case 'ArrowRight':
-      if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
+      e.preventDefault();
+      if (e.shiftKey && curType === 'tv') triggerNextEp();
+      else showSeekFeedback(10);
+      break;
     case 'ArrowLeft':
-      if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
+      e.preventDefault();
+      if (e.shiftKey && curType === 'tv') playPrevEp();
+      else showSeekFeedback(-10);
+      break;
   }
 });
 
@@ -1405,183 +1440,16 @@ document.getElementById('player').addEventListener('touchend', e => {
   }
 }, { passive: false });
 
-/* ══════════════════════════════════════════════════════════════
-   LIVE SPORTS
-══════════════════════════════════════════════════════════════ */
-const SPORTS_API  = 'https://streamed.su/api';
-const SPORTS_CORS = 'https://corsproxy.io/?url=';
-const SPORT_CATS = [
-  { id:'all',               label:'All Sports' },
-  { id:'football',          label:'Football' },
-  { id:'basketball',        label:'Basketball' },
-  { id:'american-football', label:'Am. Football' },
-  { id:'baseball',          label:'Baseball' },
-  { id:'hockey',            label:'Ice Hockey' },
-  { id:'tennis',            label:'Tennis' },
-  { id:'motor-sports',      label:'Motorsports' },
-  { id:'fight',             label:'Fighting / MMA' },
-  { id:'rugby',             label:'Rugby' },
-  { id:'golf',              label:'Golf' },
-  { id:'cricket',           label:'Cricket' },
-];
-const SPORT_LABEL = {
-  'football':'Football','basketball':'Basketball','american-football':'Am. Football',
-  'baseball':'Baseball','hockey':'Ice Hockey','tennis':'Tennis',
-  'motor-sports':'Motorsports','fight':'Fighting / MMA','rugby':'Rugby',
-  'golf':'Golf','cricket':'Cricket','other-sports':'Other'
-};
-
-let liveSportsData   = [];
-let recentSportsData = [];
-let sportFilter      = 'all';
-let sportsLoaded     = false;
-
-function switchToSports(push=true){
-  if (push) history.pushState({ view:'sports' }, '');
-  document.getElementById('tabMovies').classList.remove('on');
-  document.getElementById('tabTV').classList.remove('on');
-  document.getElementById('tabSports').classList.add('on');
-  document.getElementById('home').style.display = 'none';
-  document.getElementById('browse').classList.remove('open');
-  document.getElementById('watchlistPage').classList.remove('open');
-  document.getElementById('sports').classList.add('open');
-  if (!sportsLoaded) loadSports();
-}
-
-function closeSports(){
-  document.getElementById('sports').classList.remove('open');
-  document.getElementById('home').style.display = '';
-}
-
-async function loadSports(){
-  sportsLoaded = true;
-  document.getElementById('sportsLiveGrid').innerHTML =
-    '<div class="sports-loading"><div class="sports-spinner"></div><p>Fetching live events…</p></div>';
-  document.getElementById('sportsRecentGrid').innerHTML = '';
-  document.getElementById('recentHdr').style.display = 'none';
-  buildSportFilter();
-  try {
-    const proxy = u => `${SPORTS_CORS}${encodeURIComponent(u)}`;
-    const [liveRes, popRes, fightRes] = await Promise.all([
-      fetch(proxy(`${SPORTS_API}/matches/live`)),
-      fetch(proxy(`${SPORTS_API}/matches/popular`)),
-      fetch(proxy(`${SPORTS_API}/matches/fight`)).catch(() => null)
-    ]);
-    const live  = liveRes.ok         ? await liveRes.json()  : [];
-    const pop   = popRes.ok          ? await popRes.json()   : [];
-    const fight = fightRes?.ok       ? await fightRes.json() : [];
-
-    const liveIds = new Set(live.map(m => m.id));
-    const seen    = new Set();
-
-    liveSportsData = live.filter(m => {
-      if (!m.sources?.length || seen.has(m.id)) return false;
-      seen.add(m.id); return true;
-    });
-
-    // Recent = popular + all fight events that aren't currently live
-    recentSportsData = [...pop, ...fight].filter(m => {
-      if (!m.sources?.length || liveIds.has(m.id) || seen.has(m.id)) return false;
-      seen.add(m.id); return true;
-    });
-
-    renderSportsGrids();
-  } catch(e) {
-    document.getElementById('sportsLiveGrid').innerHTML =
-      '<div class="sports-empty">Could not load live events. Check your connection and try again.</div>';
-  }
-}
-
-function buildSportFilter(){
-  document.getElementById('sportFilter').innerHTML = SPORT_CATS.map(c =>
-    `<button class="sport-chip${c.id===sportFilter?' on':''}" onclick="filterSport('${c.id}')">${c.label}</button>`
-  ).join('');
-}
-
-function filterSport(cat){
-  sportFilter = cat;
-  buildSportFilter();
-  renderSportsGrids();
-}
-
-function renderSportsGrids(){
-  const filter = m => sportFilter === 'all' || m.category === sportFilter;
-  renderGrid(document.getElementById('sportsLiveGrid'),   liveSportsData.filter(filter),   true);
-  const recent = recentSportsData.filter(filter);
-  document.getElementById('recentHdr').style.display = recent.length ? '' : 'none';
-  renderGrid(document.getElementById('sportsRecentGrid'), recent, false);
-}
-
-function renderGrid(grid, list, isLive){
-  if (!list.length){
-    grid.innerHTML = isLive
-      ? '<div class="sports-empty">No live events right now for this sport.</div>'
-      : '';
-    return;
-  }
-  grid.innerHTML = '';
-  list.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'sport-card';
-    card.innerHTML = `
-      <div class="sport-card-top">
-        <span class="sport-cat-badge">${SPORT_LABEL[m.category] || m.category}</span>
-        ${isLive
-          ? '<span class="sport-live-badge"><span class="live-dot"></span>LIVE</span>'
-          : '<span class="sport-aired-badge">Replay</span>'}
-      </div>
-      <div class="sport-card-title">${m.title}</div>
-      <div class="sport-card-foot">
-        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ${m.sources.length} stream${m.sources.length !== 1 ? 's' : ''} available
-      </div>`;
-    card.onclick = () => openSportsPlayer(m);
-    grid.appendChild(card);
-  });
-}
-
-function openSportsPlayer(match){
-  const sources = match.sources.map((src, i) => ({
-    name: `Stream ${i + 1}`,
-    url:  `https://embedme.top/embed/${src.source}/${src.id}/1`
-  }));
-  const frame = document.getElementById('frame');
-  frame.src = sources[0].url;
-  document.getElementById('ptitle').textContent = match.title;
-  document.getElementById('psrcsWrap').style.display = sources.length > 1 ? '' : 'none';
-  document.getElementById('pepCtrls').style.display = 'none';
-  document.getElementById('player').classList.add('open');
-  lockBodyScroll();
-  showPlayerHint();
-
-  const listEl = document.getElementById('psrcsList');
-  const curEl  = document.getElementById('psrcsCurrent');
-  listEl.innerHTML = '';
-  curEl.textContent = sources[0].name;
-  sources.forEach((s, i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'src-dd-item' + (i === 0 ? ' on' : '');
-    b.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>${s.name}</span>`;
-    b.onclick = () => {
-      frame.src = s.url;
-      curEl.textContent = s.name;
-      listEl.querySelectorAll('.src-dd-item').forEach((x, j) => x.classList.toggle('on', j === i));
-      closeSrcDD('p');
-    };
-    listEl.appendChild(b);
-  });
-}
 
 /* ══════════════════════════════════════════════════════════════
    MOBILE BOTTOM TAB BAR
 ══════════════════════════════════════════════════════════════ */
 function setMobileTab(tab){
-  ['mbMovies','mbTV','mbSports','mbWatchlist'].forEach(id=>{
+  ['mbMovies','mbTV','mbWatchlist'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const map = {movies:'mbMovies', tv:'mbTV', sports:'mbSports', watchlist:'mbWatchlist'};
+  const map = {movies:'mbMovies', tv:'mbTV', watchlist:'mbWatchlist'};
   const el = document.getElementById(map[tab]);
   if (el) el.classList.add('active');
 }

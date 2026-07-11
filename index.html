@@ -24,7 +24,6 @@
   <div class="nav-tabs">
     <div class="nav-tab on" id="tabMovies" onclick="switchTab('movie')">Movies</div>
     <div class="nav-tab"   id="tabTV"     onclick="switchTab('tv')">TV Series</div>
-    <div class="nav-tab"   id="tabSports" onclick="switchToSports()">Sports <span class="tab-live-dot"></span></div>
   </div>
   <ul class="nav-links">
     <li><a onclick="goHome()">Home</a></li>
@@ -105,25 +104,6 @@
   </div>
 </div>
 
-<!-- SPORTS PAGE -->
-<div id="sports">
-  <div class="sports-hero">
-    <h1 class="sports-hero-title">Live Sports</h1>
-    <button class="sports-refresh" onclick="loadSports()" title="Refresh">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-    </button>
-  </div>
-  <div class="sport-filter" id="sportFilter"></div>
-  <div class="sports-section-hdr">
-    <span class="sport-live-badge"><span class="live-dot"></span>Live Now</span>
-  </div>
-  <div id="sportsLiveGrid" class="sports-grid"></div>
-  <div class="sports-section-hdr" id="recentHdr" style="display:none">
-    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    Recently Aired
-  </div>
-  <div id="sportsRecentGrid" class="sports-grid"></div>
-</div>
 
 <!-- BROWSE/SEARCH PAGE -->
 <div id="browse">
@@ -229,6 +209,7 @@
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span>If this source doesn't load, tap <strong>Next Server</strong> or pick one from the dropdown above.</span>
   </div>
+  <div id="seekFeedback"></div>
   <iframe id="frame" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="no-referrer"></iframe>
 
   <!-- EPISODE PANEL (slides in from right, TV only) -->
@@ -315,10 +296,6 @@
   <button id="mbTV" onclick="switchTab('tv');goHome();setMobileTab('tv')">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
     Series
-  </button>
-  <button id="mbSports" onclick="switchToSports();setMobileTab('sports')">
-    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-    Sports
   </button>
   <button id="mbWatchlist" onclick="openWatchlist();setMobileTab('watchlist')">
     <span class="mb-icon">
