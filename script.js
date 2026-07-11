@@ -21,18 +21,26 @@ const IMG  = 'https://image.tmdb.org/t/p';
 // increasingly unreliable / rotating domains. Add sources back here if
 // you find a new one worth testing.)
 const MOVIE_SRCS = [
-  { id:'vidfast', name:'VidFast',    fn: id => `https://vidfast.pro/movie/${id}` },
-  { id:'vidlink', name:'VidLink',    fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
-  { id:'vasy',    name:'Videasy',    fn: id => `https://player.videasy.net/movie/${id}` },
-  { id:'vsto',    name:'VidSrc .to', fn: id => `https://vidsrc.to/embed/movie/${id}` },
-  { id:'vsfyi',   name:'VidSrc FYI', fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
+  { id:'s1', name:'Server 1',  fn: id => `https://vidfast.pro/movie/${id}` },
+  { id:'s2', name:'Server 2',  fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
+  { id:'s3', name:'Server 3',  fn: id => `https://player.videasy.net/movie/${id}` },
+  { id:'s4', name:'Server 4',  fn: id => `https://vidsrc.to/embed/movie/${id}` },
+  { id:'s5', name:'Server 5',  fn: id => `https://vidsrc.xyz/embed/movie?tmdb=${id}` },
+  { id:'s6', name:'Server 6',  fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
+  { id:'s7', name:'Server 7',  fn: id => `https://autoembed.cc/embed/movie/${id}` },
+  { id:'s8', name:'Server 8',  fn: id => `https://www.2embed.stream/embed/movie/${id}` },
+  { id:'s9', name:'Server 9',  fn: id => `https://player.smashy.stream/movie/${id}` },
 ];
 const TV_SRCS = [
-  { id:'vidfast', name:'VidFast',    fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
-  { id:'vidlink', name:'VidLink',    fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
-  { id:'vasy',    name:'Videasy',    fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
-  { id:'vsto',    name:'VidSrc .to', fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-  { id:'vsfyi',   name:'VidSrc FYI', fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
+  { id:'s1', name:'Server 1',  fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
+  { id:'s2', name:'Server 2',  fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
+  { id:'s3', name:'Server 3',  fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
+  { id:'s4', name:'Server 4',  fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
+  { id:'s5', name:'Server 5',  fn:(id,s,e)=>`https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { id:'s6', name:'Server 6',  fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
+  { id:'s7', name:'Server 7',  fn:(id,s,e)=>`https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
+  { id:'s8', name:'Server 8',  fn:(id,s,e)=>`https://www.2embed.stream/embed/tv/${id}/${s}/${e}` },
+  { id:'s9', name:'Server 9',  fn:(id,s,e)=>`https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 ];
 
 const MG = {28:'Action',18:'Drama',35:'Comedy',27:'Horror',878:'Sci-Fi',10749:'Romance',53:'Thriller',16:'Animation',12:'Adventure',14:'Fantasy',80:'Crime',99:'Documentary'};
