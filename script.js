@@ -1028,9 +1028,193 @@ function _syncFullscreenIcon(){
   icon.innerHTML = inFs
     ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>'
     : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+  _syncSeekBtns();
+  if (inFs) showPlayerUI();
 }
 document.addEventListener('fullscreenchange', _syncFullscreenIcon);
 document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
+
+
+/* ═══════════════════════════════════════════════
+   15-SECOND SKIP
+   The stream is a cross-origin <iframe>, so there is no <video>
+   we can touch — .currentTime is off limits. Two things are
+   actually possible, and seekBy() uses both:
+
+     1. postMessage. The newer embeds broadcast their position to
+        the parent, and some accept a seek command back. When that
+        lands the skip is instant.
+     2. Reload the embed at a start-time URL parameter, for the
+        providers that expose one (see SEEK_PARAM). This costs a
+        re-buffer, so it's only used when (1) demonstrably did
+        nothing — we watch the reported position to find out.
+
+   On a server that does neither we can't seek at all; the buttons
+   dim and say so rather than pretending.
+═══════════════════════════════════════════════ */
+const SEEK_STEP = 15;
+
+// Start-time query param, by source id. Only add one here after
+// confirming the provider honours it — a wrong param silently
+// restarts the stream from the beginning.
+const SEEK_PARAM = {
+  vidfast: 'startAt',
+  vasy:    'progress',
+};
+
+let _pbTime  = 0;      // last position the embed reported, in seconds
+let _pbAt    = 0;      // Date.now() of that report
+let _pbSeen  = false;  // has this embed ever reported a position?
+let _seekPending = 0;  // deltas accumulated while the user taps
+let _seekTimer   = null;
+let _seekFrom    = 0;  // position when the current burst of taps started
+let _seekPostAt  = 0;
+let _seekWarned  = false;
+
+// A fresh document in the iframe means a fresh player — drop what we
+// knew. Covers every place that reassigns frame.src with one hook.
+document.getElementById('frame').addEventListener('load', () => {
+  _pbTime = 0; _pbAt = 0; _pbSeen = false; _seekWarned = false;
+  _seekPending = 0; clearTimeout(_seekTimer);
+  _syncSeekBtns();
+});
+
+// Embeds don't agree on a payload shape, so go looking for anything
+// that reads like a playback position.
+const _TIME_KEYS = ['currenttime','watched','position','playedseconds','timestamp','seconds'];
+function _findTime(v, depth){
+  if (depth > 4 || !v || typeof v !== 'object') return null;
+  for (const k in v){
+    const val = v[k];
+    if (typeof val === 'number'){
+      if (_TIME_KEYS.includes(k.toLowerCase()) && isFinite(val) && val >= 0 && val < 86400) return val;
+    } else if (val && typeof val === 'object'){
+      const t = _findTime(val, depth + 1);
+      if (t != null) return t;
+    }
+  }
+  return null;
+}
+
+window.addEventListener('message', e => {
+  const frame = document.getElementById('frame');
+  if (!frame || e.source !== frame.contentWindow) return;
+  let d = e.data;
+  if (typeof d === 'string'){
+    try { d = JSON.parse(d); } catch { return; }
+  }
+  const t = _findTime(d, 0);
+  if (t == null) return;
+  _pbTime = t; _pbAt = Date.now(); _pbSeen = true;
+});
+
+// Reported position, nudged forward by however long ago it arrived.
+// Capped at 2s of drift: reports stop while paused, and we'd rather
+// under-estimate than skip past where the viewer actually is.
+function _estTime(){
+  if (!_pbSeen) return null;
+  return _pbTime + Math.min((Date.now() - _pbAt) / 1000, 2);
+}
+
+function _fmtT(s){
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : String(m))
+       + ':' + String(sec).padStart(2,'0');
+}
+
+function _showSeekInd(delta){
+  const el = document.getElementById('pSeekInd');
+  el.textContent = (delta > 0 ? '⏩  +' : '⏪  −') + Math.abs(delta) + 's'
+                 + (_pbSeen ? '   ' + _fmtT(Math.max(0, _seekFrom + delta)) : '');
+  el.classList.add('on');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('on'), 900);
+}
+
+// Fire the seek at the embed in the handful of shapes these players
+// use. Unrecognised messages are ignored by the receiver, so the only
+// cost of guessing wide is a few no-ops.
+function _postSeek(delta, abs){
+  const w = document.getElementById('frame').contentWindow;
+  if (!w) return;
+  const msgs = [
+    { type:'SEEK',   data:{ time: abs, seconds: abs } },
+    { type:'seek',   time: abs },
+    { type:'PLAYER_COMMAND', data:{ command:'seek', time: abs } },
+    { event:'seek',  currentTime: abs },
+    { type:'SKIP',   data:{ seconds: delta } },
+  ];
+  for (const m of msgs){
+    try { w.postMessage(m, '*'); } catch {}
+  }
+  _seekPostAt = Date.now();
+}
+
+function seekBy(delta){
+  if (!document.getElementById('player').classList.contains('open')) return;
+  showPlayerUI();
+
+  if (!_seekPending) _seekFrom = _estTime() ?? 0;
+  _seekPending += delta;
+  _showSeekInd(_seekPending);
+
+  const abs = _pbSeen ? Math.max(0, _seekFrom + _seekPending) : null;
+  _postSeek(delta, abs);
+
+  // Let taps pile up before committing — three taps should be one
+  // jump, not three reloads.
+  clearTimeout(_seekTimer);
+  _seekTimer = setTimeout(_commitSeek, 700);
+}
+
+function _commitSeek(){
+  const delta = _seekPending;
+  _seekPending = 0;
+  if (!delta) return;
+
+  const target = Math.max(0, _seekFrom + delta);
+
+  // Did the embed act on the postMessage? If a report arrived after we
+  // sent it and the position landed near the target, we're done.
+  if (_pbSeen && _pbAt > _seekPostAt && Math.abs(_pbTime - target) < 5) return;
+
+  const srcs  = curType === 'movie' ? MOVIE_SRCS : TV_SRCS;
+  const src   = srcs[curSrc];
+  const param = SEEK_PARAM[src?.id];
+
+  if (!param){
+    if (!_seekWarned){
+      _seekWarned = true;
+      toast(`${src?.name || 'This server'} can't be seeked from outside — use its own bar, or press N for another server`);
+    }
+    return;
+  }
+  if (!_pbSeen){
+    toast('Waiting for this server to report its position — try again in a moment');
+    return;
+  }
+
+  const base = curType === 'movie'
+    ? src.fn(curId)
+    : src.fn(curId, curSeason, curEpisode);
+  let url;
+  try {
+    url = new URL(base);
+    url.searchParams.set(param, String(Math.round(target)));
+  } catch { return; }
+
+  document.getElementById('frame').src = url.toString();
+  toast(`Skipping to ${_fmtT(target)}`);
+}
+
+// Dim the buttons on servers we know we can't drive.
+function _syncSeekBtns(){
+  const srcs = curType === 'movie' ? MOVIE_SRCS : TV_SRCS;
+  const dead = !SEEK_PARAM[srcs[curSrc]?.id] && !_pbSeen;
+  ['pSeekBack','pSeekFwd'].forEach(id =>
+    document.getElementById(id)?.classList.toggle('dead', dead));
+}
 
 
 /* ═══════════════════════════════════════════════
@@ -1392,10 +1576,19 @@ document.addEventListener('keydown', e => {
       if (!inFs){ e.preventDefault(); closePlayer(); } break;
     case 'n': case 'N':
       e.preventDefault(); switchToNextSrc(); break;
+    case 'j': case 'J':
+      e.preventDefault(); seekBy(-SEEK_STEP); break;
+    case 'l': case 'L':
+      e.preventDefault(); seekBy(SEEK_STEP); break;
+    // In fullscreen the arrows do what every video player does — skip.
+    // Outside it they stay episode navigation, which is what the
+    // episode strip next to them implies.
     case 'ArrowRight':
-      if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
+      if (inFs){ e.preventDefault(); seekBy(SEEK_STEP); }
+      else if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
     case 'ArrowLeft':
-      if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
+      if (inFs){ e.preventDefault(); seekBy(-SEEK_STEP); }
+      else if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
   }
 });
 

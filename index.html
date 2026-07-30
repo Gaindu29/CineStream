@@ -205,6 +205,17 @@
     </div>
   </div>
 
+  <!-- 15s SKIP — fullscreen only (see seekBy() in script.js) -->
+  <button class="pseek pseek-back" id="pSeekBack" onclick="seekBy(-15)" title="Back 15s  (J / ←)" aria-label="Back 15 seconds">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    <b>15</b>
+  </button>
+  <button class="pseek pseek-fwd" id="pSeekFwd" onclick="seekBy(15)" title="Forward 15s  (L / →)" aria-label="Forward 15 seconds">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    <b>15</b>
+  </button>
+  <div id="pSeekInd"></div>
+
   <div id="playerHint">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <span>If this source doesn't load, tap <strong>Next Server</strong> or pick one from the dropdown above.</span>
