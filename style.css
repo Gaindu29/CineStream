@@ -174,27 +174,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 #player.ui-hidden .ptop>*{pointer-events:none!important}
 #player.ui-hidden{cursor:none}
 
-/* 15-SECOND SKIP — only surfaced in fullscreen, where the embed's own
-   controls are hardest to reach. Hidden alongside the rest of the
-   overlay so the buttons never sit on top of the stream while idle. */
-.pseek{position:absolute;top:50%;z-index:12;display:none;align-items:center;justify-content:center;width:64px;height:64px;padding:0;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.16);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:opacity .35s ease,background .2s ease}
-.pseek b{position:absolute;font-size:10px;font-weight:700;line-height:1;letter-spacing:.3px;transform:translateY(1px)}
-.pseek:hover{background:rgba(0,0,0,.7)}
-.pseek:active{background:rgba(232,185,74,.28)}
-.pseek.dead{opacity:.4}
-.pseek-back{left:6%;transform:translateY(-50%)}
-.pseek-fwd{right:6%;transform:translateY(-50%)}
-#player:fullscreen .pseek{display:flex}
-#player:-webkit-full-screen .pseek{display:flex}
-#player.ui-hidden .pseek{opacity:0;pointer-events:none}
-#pSeekInd{position:absolute;top:50%;left:50%;z-index:14;transform:translate(-50%,-50%) scale(.92);background:rgba(0,0,0,.66);border:1px solid rgba(255,255,255,.14);border-radius:30px;padding:10px 20px;font-size:15px;font-weight:700;color:#fff;white-space:nowrap;opacity:0;pointer-events:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:opacity .18s ease,transform .18s ease}
-#pSeekInd.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-@media(max-width:700px){
-  .pseek{width:54px;height:54px}
-  .pseek svg{width:26px;height:26px}
-  .pseek-back{left:4%}
-  .pseek-fwd{right:4%}
-}
+/* HOVER/TAP CATCHER — the embed is a cross-origin iframe, so the moment
+   the pointer is over the video, #player stops seeing mousemove and the
+   top bar hides for good. This invisible strip sits above the frame and
+   feeds those events back (they bubble to #player's own listeners).
+   Height matches .ptop, so it only covers the band the bar itself
+   occupies — no new dead zone over the embed's own controls. .ptop sits
+   at z-index 1, above this, so its buttons still take clicks normally. */
+#pReveal{position:absolute;top:0;left:0;right:0;height:72px;z-index:0}
 
 /* SPORTS PAGE */
 

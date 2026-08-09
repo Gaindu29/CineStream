@@ -16,25 +16,45 @@ const IMG  = 'https://image.tmdb.org/t/p';
 //  and try a fresh one. The fallback list is intentionally long
 //  so a dead source never blocks viewing.
 // ─────────────────────────────────────────────────────────────
-// Trimmed down to the servers that are actually holding up right now.
-// (Dropped: Embed.su, AutoEmbed, SuperEmbed, 2Embed, VidSrc.me — all
-// increasingly unreliable / rotating domains. Add sources back here if
-// you find a new one worth testing.)
+// Verified 2026-08-09 by requesting each embed for a known movie (tmdb
+// 550) and a known episode (tmdb 1399 S1E1) and checking three things:
+// the request resolves, the body is a real per-title player shell rather
+// than a parked/landing page, and no X-Frame-Options blocks embedding.
+//
+// Removed that day:
+//   VidSrc.xyz  — domain no longer resolves
+//   VidSrc FYI  — byte-identical shell to VidSrc.to, same operator
+//   (earlier: Embed.su, AutoEmbed, SuperEmbed, 2Embed — all dead)
+// Rejected while looking for replacements:
+//   vidzee.wtf  — x-frame-options: SAMEORIGIN, can't be framed at all
+//   vidsrc.net  — redirects to a parked lander
+//   vidsrc.in   — marketing page, identical bytes for movie and TV
+//   vidjoy.pro  — serves a notice page, no player
+//   vidora.su / moviesapi.club / embed.su / vidsrc.cc / vidsrc.vip /
+//   autoembed.cc / rivestream.net / vidsrc.icu — do not resolve
+//
+// The first three are the known-good ones; leave them at the top.
 const MOVIE_SRCS = [
-  { id:'vidfast',  name:'VidFast',     rec:true,  fn: id => `https://vidfast.pro/movie/${id}` },
-  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}` },
-  { id:'vasy',     name:'Videasy',     rec:true,  fn: id => `https://player.videasy.net/movie/${id}` },
+  { id:'vidfast',  name:'VidFast',     rec:true,  fn: id => `https://vidfast.pro/movie/${id}?autoPlay=true` },
+  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn: id => `https://vidsrc.me/embed/movie?tmdb=${id}&autoplay=1` },
+  { id:'vasy',     name:'Videasy',     rec:true,  fn: id => `https://player.videasy.net/movie/${id}?autoplay=true` },
+  { id:'vidlink',  name:'VidLink',     rec:true,  fn: id => `https://vidlink.pro/movie/${id}?autoplay=true` },
+  { id:'m111',     name:'111Movies',              fn: id => `https://111movies.com/movie/${id}` },
+  { id:'vspm',     name:'VidSrc.pm',              fn: id => `https://vidsrc.pm/embed/movie?tmdb=${id}&autoplay=1` },
+  { id:'vssu',     name:'VidSrc.su',              fn: id => `https://vidsrc.su/embed/movie/${id}` },
+  { id:'vidapi',   name:'VidAPI',                 fn: id => `https://vidapi.xyz/embed/movie/${id}` },
   { id:'vsto',     name:'VidSrc.to',              fn: id => `https://vidsrc.to/embed/movie/${id}` },
-  { id:'vsxyz',    name:'VidSrc.xyz',             fn: id => `https://vidsrc.xyz/embed/movie?tmdb=${id}` },
-  { id:'vsfyi',    name:'VidSrc FYI',             fn: id => `https://vidsrc.fyi/embed/movie/${id}` },
 ];
 const TV_SRCS = [
-  { id:'vidfast',  name:'VidFast',     rec:true,  fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}` },
-  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { id:'vasy',     name:'Videasy',     rec:true,  fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}` },
+  { id:'vidfast',  name:'VidFast',     rec:true,  fn:(id,s,e)=>`https://vidfast.pro/tv/${id}/${s}/${e}?autoPlay=true` },
+  { id:'vsme',     name:'VidSrc.me',   rec:true,  fn:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}&autoplay=1` },
+  { id:'vasy',     name:'Videasy',     rec:true,  fn:(id,s,e)=>`https://player.videasy.net/tv/${id}/${s}/${e}?autoplay=true` },
+  { id:'vidlink',  name:'VidLink',     rec:true,  fn:(id,s,e)=>`https://vidlink.pro/tv/${id}/${s}/${e}?autoplay=true` },
+  { id:'m111',     name:'111Movies',              fn:(id,s,e)=>`https://111movies.com/tv/${id}/${s}/${e}` },
+  { id:'vspm',     name:'VidSrc.pm',              fn:(id,s,e)=>`https://vidsrc.pm/embed/tv?tmdb=${id}&season=${s}&episode=${e}&autoplay=1` },
+  { id:'vssu',     name:'VidSrc.su',              fn:(id,s,e)=>`https://vidsrc.su/embed/tv/${id}/${s}/${e}` },
+  { id:'vidapi',   name:'VidAPI',                 fn:(id,s,e)=>`https://vidapi.xyz/embed/tv/${id}/${s}/${e}` },
   { id:'vsto',     name:'VidSrc.to',              fn:(id,s,e)=>`https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
-  { id:'vsxyz',    name:'VidSrc.xyz',             fn:(id,s,e)=>`https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { id:'vsfyi',    name:'VidSrc FYI',             fn:(id,s,e)=>`https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` },
 ];
 
 const MG = {28:'Action',18:'Drama',35:'Comedy',27:'Horror',878:'Sci-Fi',10749:'Romance',53:'Thriller',16:'Animation',12:'Adventure',14:'Fantasy',80:'Crime',99:'Documentary'};
@@ -1028,214 +1048,54 @@ function _syncFullscreenIcon(){
   icon.innerHTML = inFs
     ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>'
     : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
-  _syncSeekBtns();
-  if (inFs) showPlayerUI();
+  // Entering or leaving fullscreen re-lays-out the player; make sure the
+  // bar is on screen afterwards rather than stranded in a hidden state.
+  showPlayerUI();
 }
 document.addEventListener('fullscreenchange', _syncFullscreenIcon);
 document.addEventListener('webkitfullscreenchange', _syncFullscreenIcon);
 
-
-/* ═══════════════════════════════════════════════
-   15-SECOND SKIP
-   The stream is a cross-origin <iframe>, so there is no <video>
-   we can touch — .currentTime is off limits. Two things are
-   actually possible, and seekBy() uses both:
-
-     1. postMessage. The newer embeds broadcast their position to
-        the parent, and some accept a seek command back. When that
-        lands the skip is instant.
-     2. Reload the embed at a start-time URL parameter, for the
-        providers that expose one (see SEEK_PARAM). This costs a
-        re-buffer, so it's only used when (1) demonstrably did
-        nothing — we watch the reported position to find out.
-
-   On a server that does neither we can't seek at all; the buttons
-   dim and say so rather than pretending.
-═══════════════════════════════════════════════ */
-const SEEK_STEP = 15;
-
-// Start-time query param, by source id. Only add one here after
-// confirming the provider honours it — a wrong param silently
-// restarts the stream from the beginning.
-const SEEK_PARAM = {
-  vidfast: 'startAt',
-  vasy:    'progress',
-};
-
-let _pbTime  = 0;      // last position the embed reported, in seconds
-let _pbAt    = 0;      // Date.now() of that report
-let _pbSeen  = false;  // has this embed ever reported a position?
-let _seekPending = 0;  // deltas accumulated while the user taps
-let _seekTimer   = null;
-let _seekFrom    = 0;  // position when the current burst of taps started
-let _seekPostAt  = 0;
-let _seekWarned  = false;
-
-// A fresh document in the iframe means a fresh player — drop what we
-// knew. Covers every place that reassigns frame.src with one hook.
-document.getElementById('frame').addEventListener('load', () => {
-  _pbTime = 0; _pbAt = 0; _pbSeen = false; _seekWarned = false;
-  _seekPending = 0; clearTimeout(_seekTimer);
-  _syncSeekBtns();
-});
-
-// Embeds don't agree on a payload shape, so go looking for anything
-// that reads like a playback position.
-const _TIME_KEYS = ['currenttime','watched','position','playedseconds','timestamp','seconds'];
-function _findTime(v, depth){
-  if (depth > 4 || !v || typeof v !== 'object') return null;
-  for (const k in v){
-    const val = v[k];
-    if (typeof val === 'number'){
-      if (_TIME_KEYS.includes(k.toLowerCase()) && isFinite(val) && val >= 0 && val < 86400) return val;
-    } else if (val && typeof val === 'object'){
-      const t = _findTime(val, depth + 1);
-      if (t != null) return t;
-    }
-  }
-  return null;
-}
-
-window.addEventListener('message', e => {
-  const frame = document.getElementById('frame');
-  if (!frame || e.source !== frame.contentWindow) return;
-  let d = e.data;
-  if (typeof d === 'string'){
-    try { d = JSON.parse(d); } catch { return; }
-  }
-  const t = _findTime(d, 0);
-  if (t == null) return;
-  _pbTime = t; _pbAt = Date.now(); _pbSeen = true;
-});
-
-// Reported position, nudged forward by however long ago it arrived.
-// Capped at 2s of drift: reports stop while paused, and we'd rather
-// under-estimate than skip past where the viewer actually is.
-function _estTime(){
-  if (!_pbSeen) return null;
-  return _pbTime + Math.min((Date.now() - _pbAt) / 1000, 2);
-}
-
-function _fmtT(s){
-  s = Math.max(0, Math.round(s));
-  const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
-  return (h ? h + ':' + String(m).padStart(2,'0') : String(m))
-       + ':' + String(sec).padStart(2,'0');
-}
-
-function _showSeekInd(delta){
-  const el = document.getElementById('pSeekInd');
-  el.textContent = (delta > 0 ? '⏩  +' : '⏪  −') + Math.abs(delta) + 's'
-                 + (_pbSeen ? '   ' + _fmtT(Math.max(0, _seekFrom + delta)) : '');
-  el.classList.add('on');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('on'), 900);
-}
-
-// Fire the seek at the embed in the handful of shapes these players
-// use. Unrecognised messages are ignored by the receiver, so the only
-// cost of guessing wide is a few no-ops.
-function _postSeek(delta, abs){
-  const w = document.getElementById('frame').contentWindow;
-  if (!w) return;
-  const msgs = [
-    { type:'SEEK',   data:{ time: abs, seconds: abs } },
-    { type:'seek',   time: abs },
-    { type:'PLAYER_COMMAND', data:{ command:'seek', time: abs } },
-    { event:'seek',  currentTime: abs },
-    { type:'SKIP',   data:{ seconds: delta } },
-  ];
-  for (const m of msgs){
-    try { w.postMessage(m, '*'); } catch {}
-  }
-  _seekPostAt = Date.now();
-}
-
-function seekBy(delta){
-  if (!document.getElementById('player').classList.contains('open')) return;
-  showPlayerUI();
-
-  if (!_seekPending) _seekFrom = _estTime() ?? 0;
-  _seekPending += delta;
-  _showSeekInd(_seekPending);
-
-  const abs = _pbSeen ? Math.max(0, _seekFrom + _seekPending) : null;
-  _postSeek(delta, abs);
-
-  // Let taps pile up before committing — three taps should be one
-  // jump, not three reloads.
-  clearTimeout(_seekTimer);
-  _seekTimer = setTimeout(_commitSeek, 700);
-}
-
-function _commitSeek(){
-  const delta = _seekPending;
-  _seekPending = 0;
-  if (!delta) return;
-
-  const target = Math.max(0, _seekFrom + delta);
-
-  // Did the embed act on the postMessage? If a report arrived after we
-  // sent it and the position landed near the target, we're done.
-  if (_pbSeen && _pbAt > _seekPostAt && Math.abs(_pbTime - target) < 5) return;
-
-  const srcs  = curType === 'movie' ? MOVIE_SRCS : TV_SRCS;
-  const src   = srcs[curSrc];
-  const param = SEEK_PARAM[src?.id];
-
-  if (!param){
-    if (!_seekWarned){
-      _seekWarned = true;
-      toast(`${src?.name || 'This server'} can't be seeked from outside — use its own bar, or press N for another server`);
-    }
-    return;
-  }
-  if (!_pbSeen){
-    toast('Waiting for this server to report its position — try again in a moment');
-    return;
-  }
-
-  const base = curType === 'movie'
-    ? src.fn(curId)
-    : src.fn(curId, curSeason, curEpisode);
-  let url;
-  try {
-    url = new URL(base);
-    url.searchParams.set(param, String(Math.round(target)));
-  } catch { return; }
-
-  document.getElementById('frame').src = url.toString();
-  toast(`Skipping to ${_fmtT(target)}`);
-}
-
-// Dim the buttons on servers we know we can't drive.
-function _syncSeekBtns(){
-  const srcs = curType === 'movie' ? MOVIE_SRCS : TV_SRCS;
-  const dead = !SEEK_PARAM[srcs[curSrc]?.id] && !_pbSeen;
-  ['pSeekBack','pSeekFwd'].forEach(id =>
-    document.getElementById(id)?.classList.toggle('dead', dead));
-}
 
 
 /* ═══════════════════════════════════════════════
    PLAYER UI AUTO-HIDE — overlay fades on inactivity
 ═══════════════════════════════════════════════ */
 let _uiTimer = null;
+let _uiHover = false;   // pointer is resting on the bar itself
 function showPlayerUI(){
   const p = document.getElementById('player');
   p.classList.remove('ui-hidden');
   window.focus();
   clearTimeout(_uiTimer);
   if (document.querySelector('.src-dd.open')) return; // keep visible while dropdown is open
+  if (_uiHover) return;                               // don't hide out from under the cursor
   _uiTimer = setTimeout(()=>{
     if (p.classList.contains('open')) p.classList.add('ui-hidden');
-  }, 3000);
+  }, 3500);
 }
 (function(){
   const p = document.getElementById('player');
   p.addEventListener('mouseenter', showPlayerUI);
   p.addEventListener('mousemove',  showPlayerUI);
   p.addEventListener('touchstart', showPlayerUI, {passive:true});
+
+  // The iframe swallows every pointer event inside it, so the top band —
+  // the bar plus #pReveal behind it — is the only region the page still
+  // hears from once playback starts. A pointer resting there means the
+  // viewer is reaching for the controls: keep them up.
+  p.addEventListener('mousemove', e => {
+    _uiHover = (e.clientY - p.getBoundingClientRect().top) < 80;
+  }, true);   // capture, so it settles before the showPlayerUI listener runs
+  p.addEventListener('mouseleave', () => { _uiHover = false; showPlayerUI(); });
+
+  // Coming back to the tab, or back from the iframe having grabbed
+  // focus, should always land with the controls visible.
+  window.addEventListener('focus', () => {
+    if (p.classList.contains('open')) showPlayerUI();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && p.classList.contains('open')) showPlayerUI();
+  });
 })();
 
 /* ═══════════════════════════════════════════════
@@ -1576,19 +1436,10 @@ document.addEventListener('keydown', e => {
       if (!inFs){ e.preventDefault(); closePlayer(); } break;
     case 'n': case 'N':
       e.preventDefault(); switchToNextSrc(); break;
-    case 'j': case 'J':
-      e.preventDefault(); seekBy(-SEEK_STEP); break;
-    case 'l': case 'L':
-      e.preventDefault(); seekBy(SEEK_STEP); break;
-    // In fullscreen the arrows do what every video player does — skip.
-    // Outside it they stay episode navigation, which is what the
-    // episode strip next to them implies.
     case 'ArrowRight':
-      if (inFs){ e.preventDefault(); seekBy(SEEK_STEP); }
-      else if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
+      if (curType === 'tv'){ e.preventDefault(); triggerNextEp(); } break;
     case 'ArrowLeft':
-      if (inFs){ e.preventDefault(); seekBy(-SEEK_STEP); }
-      else if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
+      if (curType === 'tv'){ e.preventDefault(); playPrevEp(); } break;
   }
 });
 
